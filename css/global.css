@@ -14,28 +14,26 @@
   11. Formulario
   ========================================================================== */
 
-
 /* 1. Variables ------------------------------------------------------------ */
 :root {
-  --color-bg: #e9e6dc;          /* fondo de la página */
-  --color-ink: #1f2a24;         /* verde pizarra: texto y fondos oscuros */
-  --color-paper: #f5f5f0;       /* fondo de las tarjetas claras */
+  --color-bg: #e9e6dc; /* fondo de la página */
+  --color-ink: #1f2a24; /* verde pizarra: texto y fondos oscuros */
+  --color-paper: #f5f5f0; /* fondo de las tarjetas claras */
   --color-chalk-muted: #a7b3aa; /* texto secundario sobre la pizarra */
-  --color-yellow: #facc15;      /* acento: tiza amarilla */
-  --color-green: #1fff32;       /* tiza verde: texto previo del próximo entreno */
-  --color-line: #d6d3c7;        /* bordes y separadores suaves */
-  --color-wood: #8a6240;        /* marco de la pizarra */
+  --color-yellow: #facc15; /* acento: tiza amarilla */
+  --color-green: #1fff32; /* tiza verde: texto previo del próximo entreno */
+  --color-line: #d6d3c7; /* bordes y separadores suaves */
+  --color-wood: #8a6240; /* marco de la pizarra */
   --color-error: #7f1d1d;
 
-  --font-display: 'Permanent Marker', cursive;
-  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: "Permanent Marker", cursive;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 
   --radius: 12px;
   --radius-sm: 8px;
   --gap: 24px;
   --container: 1200px;
 }
-
 
 /* 2. Base ----------------------------------------------------------------- */
 *,
@@ -80,7 +78,6 @@ a {
   outline-color: var(--color-yellow);
 }
 
-
 /* 3. Utilidades ----------------------------------------------------------- */
 /* Oculta el elemento visualmente pero lo deja disponible para lectores de pantalla */
 .visually-hidden {
@@ -119,7 +116,6 @@ a {
   padding-inline: var(--gap);
 }
 
-
 /* 4. Cabecera ------------------------------------------------------------- */
 .site-header {
   background: var(--color-ink);
@@ -157,7 +153,6 @@ a {
   color: var(--color-yellow);
 }
 
-
 /* 5. Estructura de la página --------------------------------------------- */
 .page {
   display: flex;
@@ -173,15 +168,24 @@ a {
   gap: var(--gap);
 }
 
-.row--stretch { align-items: stretch; }
-.row--start { align-items: flex-start; }
+.row--stretch {
+  align-items: stretch;
+}
+.row--start {
+  align-items: flex-start;
+}
 
 /* Columna ancha (3 partes) y columna estrecha (2 partes).
    El tercer valor es el ancho mínimo antes de saltar de línea.
    min-width: 0 evita que el contenido largo desborde la columna. */
-.col-main { flex: 3 1 540px; min-width: 0; }
-.col-side { flex: 2 1 340px; min-width: 0; }
-
+.col-main {
+  flex: 3 1 540px;
+  min-width: 0;
+}
+.col-side {
+  flex: 2 1 340px;
+  min-width: 0;
+}
 
 /* 6. Botones -------------------------------------------------------------- */
 .btn {
@@ -216,7 +220,6 @@ a {
   background: #33443a;
 }
 
-
 /* 7. Tarjetas ------------------------------------------------------------- */
 .card {
   display: flex;
@@ -235,7 +238,6 @@ a {
   margin: 0;
   font: 400 26px/1.2 var(--font-display);
 }
-
 
 /* 8. Pizarra -------------------------------------------------------------- */
 .board {
@@ -300,7 +302,6 @@ a {
   margin-top: auto;
 }
 
-
 /* 9. Ranking -------------------------------------------------------------- */
 .ranking {
   margin: 0;
@@ -358,7 +359,6 @@ a {
   font-weight: 500;
 }
 
-
 /* 10. Historial ----------------------------------------------------------- */
 .chips {
   display: flex;
@@ -378,7 +378,7 @@ a {
 }
 
 /* La persona seleccionada se marca con aria-pressed (sirve también para accesibilidad) */
-.chip[aria-pressed='true'] {
+.chip[aria-pressed="true"] {
   background: var(--color-ink);
   color: var(--color-paper);
   font-weight: 600;
@@ -433,7 +433,6 @@ a {
   color: #4b5a51;
 }
 
-
 /* 11. Formulario ---------------------------------------------------------- */
 .form {
   display: flex;
@@ -469,7 +468,7 @@ textarea.control {
   resize: none;
 }
 
-.control[aria-invalid='true'] {
+.control[aria-invalid="true"] {
   border-width: 2px;
   border-color: var(--color-error);
 }
@@ -489,7 +488,6 @@ textarea.control {
 .form__status.is-error {
   color: var(--color-error);
 }
-
 
 /* 12. Pie y panel de administración --------------------------------------- */
 .site-footer {
