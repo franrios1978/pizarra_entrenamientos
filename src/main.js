@@ -610,8 +610,8 @@ function buildDataFile() {
 /** ID del próximo entrenamiento (el que se muestra en la pizarra). */
 const NEXT_WORKOUT_ID = ${JSON.stringify(NEXT_WORKOUT_ID)};
 
-/** Versión de los resultados publicados. SÚBELA (+1) al publicar resultados nuevos. */
-const RESULTS_VERSION = ${RESULTS_VERSION};
+/** Versión de los resultados publicados. Se sube sola (+1) al generar el archivo. */
+const RESULTS_VERSION = ${RESULTS_VERSION + 1};
 
 /** Contraseña del panel de administración. */
 const ADMIN_PASSWORD = ${JSON.stringify(ADMIN_PASSWORD)};
@@ -650,8 +650,9 @@ function downloadDataFile() {
   URL.revokeObjectURL(url);
 
   adminStatus.textContent =
-    `data.js descargado con ${state.results.length} resultado(s). ` +
-    'Ahora sustitúyelo en src/data.js, sube RESULTS_VERSION (+1) y haz commit y push.';
+    `data.js descargado con ${state.results.length} resultado(s) y versión ` +
+    `${RESULTS_VERSION + 1} (la versión se sube sola). ` +
+    'Ahora sustitúyelo en src/data.js y haz commit y push.';
 }
 
 // Abrir el panel desde el botón discreto del pie
