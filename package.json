@@ -1,12 +1,13 @@
 {
   "name": "pizarra_entrenamientos",
   "version": "1.0.0",
-  "description": "",
+  "description": "Web para llevar el control de los entrenamientos del grupo de CrossFit",
   "main": "index.js",
   "scripts": {
     "dev": "servor src index.html 8080 --reload",
     "lint": "oxlint src",
-    "fmt": "oxfmt src"
+    "fmt": "oxfmt src",
+    "deploy": "gh-pages -d src/"
   },
   "keywords": [],
   "author": "",
@@ -20,6 +21,7 @@
   },
   "type": "module",
   "devDependencies": {
+    "gh-pages": "^6.3.0",
     "oxfmt": "^0.73.0",
     "oxlint": "^1.88.0",
     "servor": "^4.0.2"

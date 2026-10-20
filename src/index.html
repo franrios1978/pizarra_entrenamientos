@@ -134,7 +134,36 @@
           <p class="form__status" id="form-status" role="status"></p>
         </form>
       </section>
-    </div>
-  </main>
-</body>
+      </div>
+    </main>
+
+    <!-- Panel de administración (oculto; se abre con el botón del pie) -->
+    <dialog id="admin-dialog" class="admin">
+      <div id="admin-login" class="admin__box">
+        <h2 class="admin__title">Acceso administrador</h2>
+        <div class="field">
+          <label for="admin-password">Contraseña</label>
+          <input class="control" id="admin-password" type="password" autocomplete="current-password">
+        </div>
+        <button class="btn btn--dark" id="admin-login-btn" type="button">Entrar</button>
+        <p class="admin__msg" id="admin-login-msg" role="status"></p>
+      </div>
+
+      <div id="admin-panel" class="admin__box" hidden>
+        <h2 class="admin__title">Panel de administración</h2>
+        <p>Genera un archivo <code>data.js</code> con los resultados actuales para publicarlos en el repositorio.</p>
+        <div class="admin__actions">
+          <button class="btn btn--yellow" id="admin-generate" type="button">Descargar data.js</button>
+          <button class="btn btn--dark" id="admin-logout" type="button">Salir</button>
+        </div>
+        <p class="admin__msg" id="admin-status" role="status"></p>
+      </div>
+    </dialog>
+
+    <footer class="site-footer">
+      <div class="container">
+        <button class="admin-link" type="button" data-action="open-admin">⚙</button>
+      </div>
+    </footer>
+  </body>
 </html>

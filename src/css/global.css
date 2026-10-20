@@ -489,3 +489,60 @@ textarea.control {
 .form__status.is-error {
   color: var(--color-error);
 }
+
+
+/* 12. Pie y panel de administración --------------------------------------- */
+.site-footer {
+  padding-block: 16px 32px;
+  text-align: right;
+}
+
+/* Botón discreto que abre el panel de administración */
+.admin-link {
+  border: 0;
+  background: none;
+  color: var(--color-line);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.admin-link:hover {
+  color: var(--color-ink);
+}
+
+.admin {
+  width: min(520px, calc(100% - 32px));
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+.admin::backdrop {
+  background: rgb(31 42 36 / 55%);
+}
+
+.admin__box {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: clamp(20px, 4vw, 28px);
+}
+
+.admin__title {
+  margin: 0;
+  font: 400 26px/1.2 var(--font-display);
+}
+
+.admin__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin__msg {
+  min-height: 1.4em;
+  margin: 0;
+  font-size: 14px;
+}
