@@ -1,0 +1,491 @@
+/* ==========================================================================
+   Crew WOD · estilos
+   Índice:
+   1. Variables (colores, tipografías, medidas)
+   2. Base
+   3. Utilidades
+   4. Cabecera
+   5. Estructura de la página
+   6. Botones
+   7. Tarjetas
+   8. Pizarra (próximo entrenamiento)
+   9. Ranking
+  10. Historial (chips + tabla)
+  11. Formulario
+  ========================================================================== */
+
+
+/* 1. Variables ------------------------------------------------------------ */
+:root {
+  --color-bg: #e9e6dc;          /* fondo de la página */
+  --color-ink: #1f2a24;         /* verde pizarra: texto y fondos oscuros */
+  --color-paper: #f5f5f0;       /* fondo de las tarjetas claras */
+  --color-chalk-muted: #a7b3aa; /* texto secundario sobre la pizarra */
+  --color-yellow: #facc15;      /* acento: tiza amarilla */
+  --color-green: #1fff32;       /* tiza verde: texto previo del próximo entreno */
+  --color-line: #d6d3c7;        /* bordes y separadores suaves */
+  --color-wood: #8a6240;        /* marco de la pizarra */
+  --color-error: #7f1d1d;
+
+  --font-display: 'Permanent Marker', cursive;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --gap: 24px;
+  --container: 1200px;
+}
+
+
+/* 2. Base ----------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Desplazamiento suave al pulsar los enlaces de anclas, salvo que el usuario lo desactive */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  line-height: 1.4;
+}
+
+a {
+  color: inherit;
+}
+
+/* El atributo hidden debe ganar a cualquier display de nuestras reglas */
+[hidden] {
+  display: none !important;
+}
+
+/* Indicador de foco visible para quien navega con teclado */
+:focus-visible {
+  outline: 3px solid var(--color-ink);
+  outline-offset: 3px;
+}
+
+/* Sobre fondos oscuros el contorno debe ser claro */
+.site-header :focus-visible,
+.board :focus-visible {
+  outline-color: var(--color-yellow);
+}
+
+
+/* 3. Utilidades ----------------------------------------------------------- */
+/* Oculta el elemento visualmente pero lo deja disponible para lectores de pantalla */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Enlace "saltar al contenido": solo aparece al recibir el foco */
+.skip-link {
+  position: absolute;
+  left: 16px;
+  top: -100px;
+  z-index: 10;
+  padding: 10px 16px;
+  background: var(--color-yellow);
+  color: var(--color-ink);
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+}
+
+.skip-link:focus {
+  top: 16px;
+}
+
+.container {
+  width: 100%;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--gap);
+}
+
+
+/* 4. Cabecera ------------------------------------------------------------- */
+.site-header {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+
+.site-header__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-block: 16px;
+}
+
+.logo {
+  font-family: var(--font-display);
+  font-size: 28px;
+  color: var(--color-yellow);
+  text-decoration: none;
+}
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  font-size: 15px;
+}
+
+.site-nav a {
+  text-decoration: none;
+}
+
+.site-nav a:hover {
+  color: var(--color-yellow);
+}
+
+
+/* 5. Estructura de la página --------------------------------------------- */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding-block: 32px 56px;
+}
+
+/* Fila que pasa a una sola columna cuando no caben las dos */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap);
+}
+
+.row--stretch { align-items: stretch; }
+.row--start { align-items: flex-start; }
+
+/* Columna ancha (3 partes) y columna estrecha (2 partes).
+   El tercer valor es el ancho mínimo antes de saltar de línea.
+   min-width: 0 evita que el contenido largo desborde la columna. */
+.col-main { flex: 3 1 540px; min-width: 0; }
+.col-side { flex: 2 1 340px; min-width: 0; }
+
+
+/* 6. Botones -------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 12px 22px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  font: 600 15px/1 var(--font-body);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn--yellow {
+  background: var(--color-yellow);
+  color: var(--color-ink);
+}
+
+.btn--yellow:hover {
+  background: #fde047;
+}
+
+.btn--dark {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  font-size: 16px;
+}
+
+.btn--dark:hover {
+  background: #33443a;
+}
+
+
+/* 7. Tarjetas ------------------------------------------------------------- */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: clamp(20px, 3vw, 28px);
+  background: var(--color-paper);
+  border-radius: var(--radius);
+}
+
+.card--accent {
+  background: var(--color-yellow);
+}
+
+.card__title {
+  margin: 0;
+  font: 400 26px/1.2 var(--font-display);
+}
+
+
+/* 8. Pizarra -------------------------------------------------------------- */
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: clamp(20px, 4vw, 36px);
+  background: var(--color-ink);
+  color: var(--color-paper);
+  border: 12px solid var(--color-wood);
+  border-radius: var(--radius);
+}
+
+.board__meta {
+  margin: 0;
+  font-size: 14px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--color-chalk-muted);
+}
+
+.board__title {
+  margin: 0;
+  font: 400 clamp(48px, 9vw, 72px)/1 var(--font-display);
+  color: var(--color-yellow);
+}
+
+.board__exercises {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font: 400 clamp(22px, 4vw, 30px)/1.5 var(--font-display);
+}
+
+/* Texto previo (warmup) antes del título: misma tipografía, en verde */
+.board__warmup {
+  color: var(--color-green);
+}
+
+/* Ejercicios con vídeo: enlace con el mismo color que el resto de la lista */
+.board__exercises a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.board__exercises a:hover {
+  color: #3d5cfc;
+}
+
+.board__note {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--color-chalk-muted);
+}
+
+/* margin-top: auto empuja el botón al final cuando la pizarra se estira */
+.board__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: auto;
+}
+
+
+/* 9. Ranking -------------------------------------------------------------- */
+.ranking {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ranking__item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.ranking__item:last-child {
+  border-bottom: 0;
+}
+
+.ranking__pos {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-line);
+  font-weight: 600;
+}
+
+.ranking__pos--first {
+  background: var(--color-yellow);
+}
+
+.ranking__name {
+  flex: 1;
+  font-weight: 600;
+}
+
+.ranking__score {
+  font-weight: 600;
+  text-align: right;
+}
+
+.ranking__empty {
+  padding: 12px 0;
+}
+
+.ranking__switch {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: auto;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+
+/* 10. Historial ----------------------------------------------------------- */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-line);
+  color: var(--color-ink);
+  font: 400 14px/1 var(--font-body);
+  cursor: pointer;
+}
+
+/* La persona seleccionada se marca con aria-pressed (sirve también para accesibilidad) */
+.chip[aria-pressed='true'] {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  font-weight: 600;
+}
+
+/* En pantallas estrechas la tabla se desplaza en horizontal en lugar de romper la página */
+.table-wrap {
+  overflow-x: auto;
+}
+
+.results {
+  width: 100%;
+  min-width: 480px;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.results th,
+.results td {
+  padding: 12px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.results th {
+  border-bottom: 2px solid var(--color-ink);
+  font-weight: 600;
+}
+
+.results td {
+  border-bottom: 1px solid var(--color-line);
+}
+
+.results tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.results th:last-child,
+.results td:last-child {
+  text-align: right;
+}
+
+.results__value {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.results__notes {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: #4b5a51;
+}
+
+
+/* 11. Formulario ---------------------------------------------------------- */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Estilo común a select, input y textarea */
+.control {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--color-ink);
+  border-radius: var(--radius-sm);
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font: 400 15px/1.4 var(--font-body);
+}
+
+textarea.control {
+  padding-block: 10px;
+  resize: none;
+}
+
+.control[aria-invalid='true'] {
+  border-width: 2px;
+  border-color: var(--color-error);
+}
+
+.field__hint {
+  margin: 0;
+  font-size: 13px;
+}
+
+.form__status {
+  min-height: 1.4em;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.form__status.is-error {
+  color: var(--color-error);
+}
