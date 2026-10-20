@@ -111,17 +111,18 @@ function formatTime(totalSeconds) {
    así que bastará con reescribir load() y save() cuando llegue ese momento.
    ========================================================================== */
 
-const STORAGE_KEY = 'crewwod:results:v2';
+const STORAGE_KEY = 'crewwod:results';
 
 const store = {
   /** Devuelve los resultados guardados o los iniciales (SEED_RESULTS) si no hay nada válido. */
   load() {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      if (Array.isArray(saved)) {
+      // Solo valen los datos guardados con la MISMA versión publicada en data.js.
+      if (saved && saved.version === RESULTS_VERSION && Array.isArray(saved.results)) {
         // Ignora resultados de atletas o entrenamientos que ya no existen en data.js
         // (por ejemplo datos antiguos guardados antes de editar ATHLETES/WORKOUTS).
-        return saved.filter(
+        return saved.results.filter(
           (result) => athleteById.has(result.athleteId) && workoutById.has(result.workoutId)
         );
       }
@@ -131,10 +132,10 @@ const store = {
     return structuredClone(SEED_RESULTS);
   },
 
-  /** Guarda la lista completa. Devuelve false si el navegador no lo permite. */
+  /** Guarda la lista completa con la versión actual. Devuelve false si el navegador no lo permite. */
   save(results) {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(results));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: RESULTS_VERSION, results }));
       return true;
     } catch {
       return false;
@@ -553,7 +554,140 @@ form.addEventListener('submit', (event) => {
 
 
 /* ==========================================================================
-   8. ARRANQUE
+   8. PANEL DE ADMINISTRACIÓN
+   Permite (solo a quien conozca la contraseña) generar un archivo data.js
+   con los resultados actuales, para subirlo al repositorio.
+
+   AVISO: en una web estática la contraseña es visible leyendo el JavaScript.
+   Sirve para operar cómodo, no como seguridad real.
+   ========================================================================== */
+
+const ADMIN_SESSION_KEY = 'crewwod:admin';
+const adminPanel = $('#admin-panel');
+const adminLogin = $('#admin-login');
+const adminPassword = $('#admin-password');
+const adminLoginBtn = $('#admin-login-btn');
+const adminLoginMsg = $('#admin-login-msg');
+const adminDialog = $('#admin-dialog');
+const adminStatus = $('#admin-status');
+
+/** Muestra el panel de administración (identificado). */
+function showAdminPanel() {
+  adminLogin.hidden = true;
+  adminPanel.hidden = false;
+  adminDialog.showModal();
+}
+
+/** Comprueba la contraseña escrita. */
+function tryAdminLogin() {
+  if (adminPassword.value === ADMIN_PASSWORD) {
+    sessionStorage.setItem(ADMIN_SESSION_KEY, '1');
+    adminPassword.value = '';
+    showAdminPanel();
+  } else {
+    adminLoginMsg.textContent = 'Contraseña incorrecta.';
+    adminPassword.value = '';
+    adminPassword.focus();
+  }
+}
+
+/**
+ * Genera el texto completo de data.js a partir de los datos actuales.
+ * Respeta WORKOUTS y ATHLETES tal como estén en el proyecto: solo se
+ * sustituye la lista de resultados (SEED_RESULTS).
+ */
+function buildDataFile() {
+  const header = `'use strict';
+
+/* oxlint-disable no-unused-vars */
+/* Las constantes se usan desde main.js: ambos scripts clásicos comparten el mismo ámbito global. */
+
+/* ==========================================================================
+   Crew WOD · DATOS EDITABLES
+   Generado automáticamente el ${new Date().toLocaleString('es-ES')}.
+   ========================================================================== */
+
+/** ID del próximo entrenamiento (el que se muestra en la pizarra). */
+const NEXT_WORKOUT_ID = ${JSON.stringify(NEXT_WORKOUT_ID)};
+
+/** Versión de los resultados publicados. SÚBELA (+1) al publicar resultados nuevos. */
+const RESULTS_VERSION = ${RESULTS_VERSION};
+
+/** Contraseña del panel de administración. */
+const ADMIN_PASSWORD = ${JSON.stringify(ADMIN_PASSWORD)};
+
+/** Entrenamientos. El primero (el próximo) es el que se ve en la pizarra. */
+const WORKOUTS = ${JSON.stringify(WORKOUTS, null, 2)};
+
+/** Personas del grupo. */
+const ATHLETES = ${JSON.stringify(ATHLETES, null, 2)};
+
+/** Resultados publicados. "value" es SIEMPRE un número: rondas, reps, segundos o kg. */
+const SEED_RESULTS = ${JSON.stringify(
+    state.results.map(({ athleteId, workoutId, value, notes }) => ({
+      id: makeId(),
+      athleteId,
+      workoutId,
+      value,
+      notes,
+    })),
+    null,
+    2
+  )};
+`;
+
+  return header;
+}
+
+/** Descarga el data.js generado. */
+function downloadDataFile() {
+  const blob = new Blob([buildDataFile()], { type: 'text/javascript' });
+  const url = URL.createObjectURL(blob);
+  const link = el('a', { href: url, download: 'data.js' });
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+
+  adminStatus.textContent =
+    `data.js descargado con ${state.results.length} resultado(s). ` +
+    'Ahora sustitúyelo en src/data.js, sube RESULTS_VERSION (+1) y haz commit y push.';
+}
+
+// Abrir el panel desde el botón discreto del pie
+$('[data-action="open-admin"]').addEventListener('click', () => {
+  if (sessionStorage.getItem(ADMIN_SESSION_KEY) === '1') {
+    showAdminPanel();
+    adminDialog.showModal();
+  } else {
+    adminDialog.showModal();
+    adminLogin.hidden = false;
+    adminPanel.hidden = true;
+    adminLoginMsg.textContent = '';
+    adminPassword.focus();
+  }
+});
+
+adminLoginBtn.addEventListener('click', tryAdminLogin);
+adminPassword.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    tryAdminLogin();
+  }
+});
+
+$('#admin-generate').addEventListener('click', downloadDataFile);
+$('#admin-logout').addEventListener('click', () => {
+  sessionStorage.removeItem(ADMIN_SESSION_KEY);
+  adminDialog.close();
+  adminLogin.hidden = false;
+  adminPanel.hidden = true;
+  adminStatus.textContent = '';
+});
+
+
+/* ==========================================================================
+   9. ARRANQUE
    ========================================================================== */
 
 function init() {
