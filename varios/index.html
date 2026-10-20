@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Crew WOD · Resultados de entrenamientos</title>
+  <meta name="description" content="Resultados de crossfit y circuito funcional del grupo, con el próximo entrenamiento y el ranking.">
+
+  <!-- Tipografías: Permanent Marker (pizarra) e Inter (texto) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Permanent+Marker&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- "defer": se ejecuta cuando el HTML ya está cargado. Es un script clásico
+       (no módulo) para que la página también funcione abriendo el archivo con doble clic. -->
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#pizarra">Saltar al contenido</a>
+
+  <!-- ====== Cabecera ====== -->
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="logo" href="#pizarra">Crew WOD</a>
+      <nav class="site-nav" aria-label="Principal">
+        <a href="#pizarra">Pizarra</a>
+        <a href="#historial">Historial</a>
+        <a href="#subir">Subir resultado</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page">
+    <noscript>
+      <p class="card">Esta página necesita JavaScript para mostrar los entrenamientos y los resultados.</p>
+    </noscript>
+
+    <!-- ====== Fila 1: pizarra con el próximo entreno + ranking ====== -->
+    <div class="row row--stretch">
+
+      <!-- El contenido lo rellena app.js a partir del objeto del próximo entrenamiento -->
+      <section id="pizarra" class="board col-main" aria-labelledby="board-title">
+        <p class="board__meta">Próximo entrenamiento · <time id="next-date"></time></p>
+        <h1 class="board__title" id="board-title"></h1>
+        <ul class="board__exercises" id="next-exercises"></ul>
+        <p class="board__note" id="next-note"></p>
+        <div class="board__actions">
+          <!-- Es un enlace al formulario; app.js además preselecciona este entrenamiento y da el foco al campo -->
+          <a class="btn btn--yellow" href="#subir" data-action="focus-form">Apuntar mi resultado</a>
+        </div>
+      </section>
+
+      <section class="card col-side" aria-labelledby="ranking-title">
+        <h2 class="card__title" id="ranking-title">Ranking</h2>
+        <ol class="ranking" id="ranking-list"></ol>
+        <div class="ranking__switch">
+          <label for="ranking-workout">Ver otro ranking</label>
+          <select class="control" id="ranking-workout"></select>
+        </div>
+      </section>
+    </div>
+
+    <!-- ====== Fila 2: historial por persona + formulario ====== -->
+    <div class="row row--start">
+
+      <section id="historial" class="card col-main" aria-labelledby="history-title">
+        <h2 class="card__title" id="history-title">Historial por persona</h2>
+
+        <!-- Los botones de cada persona los crea app.js -->
+        <div class="chips" id="history-chips" role="group" aria-label="Elegir persona"></div>
+
+        <!-- El contenedor es enfocable para poder desplazar la tabla con el teclado en pantallas pequeñas -->
+        <div class="table-wrap" tabindex="0" role="region" aria-labelledby="history-caption">
+          <table class="results">
+            <caption class="visually-hidden" id="history-caption"></caption>
+            <thead>
+              <tr>
+                <th scope="col">Fecha</th>
+                <th scope="col">Entrenamiento</th>
+                <th scope="col">Resultado</th>
+              </tr>
+            </thead>
+            <tbody id="history-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="subir" class="card card--accent col-side" aria-labelledby="form-title">
+        <h2 class="card__title" id="form-title">Subir resultado</h2>
+
+        <form id="result-form" class="form" novalidate>
+          <div class="field">
+            <label for="athlete">Atleta</label>
+            <select class="control" id="athlete" name="athlete" required></select>
+          </div>
+
+          <div class="field">
+            <label for="workout">Entrenamiento</label>
+            <select class="control" id="workout" name="workout" required></select>
+          </div>
+
+          <div class="field">
+            <label for="result">Resultado</label>
+            <input class="control" id="result" name="result" type="text" autocomplete="off"
+                   required aria-describedby="result-hint">
+            <!-- El formato esperado cambia según el entrenamiento (tiempo, rondas, kg...) -->
+            <p class="field__hint" id="result-hint"></p>
+          </div>
+
+          <div class="field">
+            <label for="notes">Notas</label>
+            <textarea class="control" id="notes" name="notes" rows="3" maxlength="200"
+                      placeholder="Escalado, sensaciones…"></textarea>
+          </div>
+
+          <button class="btn btn--dark" type="submit">Guardar resultado</button>
+
+          <!-- role="status": los lectores de pantalla anuncian el mensaje al cambiar -->
+          <p class="form__status" id="form-status" role="status"></p>
+        </form>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

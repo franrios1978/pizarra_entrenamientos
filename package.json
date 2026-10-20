@@ -1,0 +1,27 @@
+{
+  "name": "pizarra_entrenamientos",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "servor src index.html 8080 --reload",
+    "lint": "oxlint src",
+    "fmt": "oxfmt src"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.22.0",
+      "onFail": "download"
+    }
+  },
+  "type": "module",
+  "devDependencies": {
+    "oxfmt": "^0.73.0",
+    "oxlint": "^1.88.0",
+    "servor": "^4.0.2"
+  }
+}
