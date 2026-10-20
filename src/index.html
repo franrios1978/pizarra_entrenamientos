@@ -25,7 +25,7 @@
   <!-- ====== Cabecera ====== -->
   <header class="site-header">
     <div class="container site-header__inner">
-      <a class="logo" href="#pizarra">Crew WOD</a>
+      <a class="logo" href="#pizarra">Fight WOD</a>
       <nav class="site-nav" aria-label="Principal">
         <a href="#pizarra">Pizarra</a>
         <a href="#historial">Historial</a>
@@ -47,7 +47,9 @@
         <p class="board__meta">Próximo entrenamiento · <time id="next-date"></time></p>
         <p class="board__exercises board__warmup" id="next-warmup"></p>
         <h1 class="board__title" id="board-title"></h1>
-        <ul class="board__exercises" id="next-exercises"></ul>
+        <div id="next-exercises-wrap">
+          <ul class="board__exercises" id="next-exercises"></ul>
+        </div>
         <p class="board__note" id="next-note"></p>
         <div class="board__actions">
           <!-- Es un enlace al formulario; app.js además preselecciona este entrenamiento y da el foco al campo -->

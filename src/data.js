@@ -33,15 +33,38 @@ const WORKOUTS = [
     detail: '',
     warmup: 'Dominadas: 4 series de 6 a 8 rep',
     scoring: 'rounds',
-    exercises: ['Devil Press (con mancuernas)	8 reps', 'Box Jump Over (Saltos al cajón) 10 rep','Fondos en Paralelas 10 reps', 'Burpee 8 reps', 'V-Ups 12 reps'],
+    exercises: [
+      // Elige tus vídeos y pega la URL entre las comillas del campo "video"
+      { text: 'Devil Press (con mancuernas) 8 reps', video: 'https://www.youtube.com/watch?v=ghacPZ9fuFU' },
+      { text: 'Box Jump Over (Saltos al cajón) 10 rep'},
+      { text: 'Fondos en Paralelas 10 reps' },
+      { text: 'Burpee 8 reps' },
+      { text: 'V-Ups 12 reps', video: 'https://www.youtube.com/watch?v=7UVgs18Y1P4' },
+    ],
     note: 'Se puntúa por rondas completas.',
   },
-  { id: 'cindy', date: '2026-10-17', name: 'Cindy', detail: "AMRAP 20'", scoring: 'rounds' },
-  { id: 'fran', date: '2026-10-15', name: 'Fran', detail: '21-15-9', scoring: 'time' },
-  { id: 'circuito', date: '2026-10-14', name: 'Circuito funcional', detail: '', scoring: 'time' },
-  { id: 'dominadas', date: '2026-10-11', name: 'Dominadas', detail: 'máximo seguidas', scoring: 'reps' },
-  { id: 'helen', date: '2026-10-09', name: 'Helen', detail: '3 rondas', scoring: 'time' },
-  { id: 'peso-muerto', date: '2026-10-06', name: 'Peso muerto', detail: '3x5', scoring: 'weight' },
+  {
+    id: 'wod-2026-10-16',
+    date: '2026-10-16',
+    time: '18:30',
+    name: "FOR TIME 20 min'",
+    detail: '',
+    warmup: 'Shoulder To Overhead: calent. + 3x5 rep',
+    scoring: 'time',
+    exercises: ['Sentadillas lastradas 20 rep', '10 zancadas', '300m carrera', 'x 5 rondas'],
+    note: 'Sin descanso (recuperar en carreta)',
+  },
+  {
+    id: 'wod-2026-10-19',
+    date: '2026-10-19',
+    time: '20:00',
+    name: "AMRAP 20'",
+    detail: '',
+    warmup: 'Calentamiento',
+    scoring: 'rounds',
+    exercises: ['Push Press 10 reps', 'Saltos al cajón 12 reps', 'Dominadas 8 reps', 'Lateral Bar-Over Burpee  10 reps'],
+    note: 'Descanso máximo de 60 seg',
+  },
 ];
 
 /** Personas del grupo. */
@@ -50,3 +73,11 @@ const ATHLETES = [
   { id: 'lucia', name: 'Lucía' },
   { id: 'fernando', name: 'Fernando' },
 ];
+
+/**
+ * Resultados iniciales. Se cargan la primera vez que se abre la web
+ * (después se guardan en el navegador de cada persona).
+ * Arranca vacía: aquí podrías poner resultados de partida si algún día quieres.
+ * "value" es SIEMPRE un número: rondas, repeticiones, segundos o kg.
+ */
+const SEED_RESULTS = [];

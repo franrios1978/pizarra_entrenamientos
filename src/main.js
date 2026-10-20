@@ -111,10 +111,10 @@ function formatTime(totalSeconds) {
    así que bastará con reescribir load() y save() cuando llegue ese momento.
    ========================================================================== */
 
-const STORAGE_KEY = 'crewwod:results:v1';
+const STORAGE_KEY = 'crewwod:results:v2';
 
 const store = {
-  /** Devuelve los resultados guardados (lista vacía si no hay nada válido). */
+  /** Devuelve los resultados guardados o los iniciales (SEED_RESULTS) si no hay nada válido. */
   load() {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -128,7 +128,7 @@ const store = {
     } catch {
       // Sin acceso a localStorage (modo privado) o JSON dañado: empezamos de cero.
     }
-    return [];
+    return structuredClone(SEED_RESULTS);
   },
 
   /** Guarda la lista completa. Devuelve false si el navegador no lo permite. */
@@ -273,25 +273,50 @@ const timeInput = $('#tiempo');
 const timeHint = $('#tiempo-hint');
 const formStatus = $('#form-status');
 
-/** Pizarra con el próximo entrenamiento (no cambia mientras se usa la web). */
-function renderNextWorkout() {
-  const workout = workoutById.get(NEXT_WORKOUT_ID);
-
+/**
+ * Pizarra. Por defecto muestra el próximo entrenamiento; si se le pasa un id,
+ * muestra ese (al elegir otro entrenamiento en el formulario).
+ * Los bloques que el entrenamiento no tenga (warmup, ejercicios, nota) se ocultan.
+ */
+function renderNextWorkout(workoutId = NEXT_WORKOUT_ID) {
+  const workout = workoutById.get(workoutId);
   const when = $('#next-date');
-  when.textContent = `${formatLongDate(workout.date)} · ${workout.time}`;
-  when.dateTime = `${workout.date}T${workout.time}`;
+  const warmup = $('#next-warmup');
+  const exercises = $('#next-exercises');
+  const note = $('#next-note');
+
+  if (!workout) {
+    when.textContent = '';
+    when.dateTime = '';
+    $('#board-title').textContent = 'Entrenamiento no encontrado';
+    warmup.hidden = true;
+    exercises.parentElement.hidden = true;
+    note.hidden = true;
+    return;
+  }
+
+  when.textContent = `${formatLongDate(workout.date)}${workout.time ? ` · ${workout.time}` : ''}`;
+  when.dateTime = workout.time ? `${workout.date}T${workout.time}` : workout.date;
 
   $('#board-title').textContent = workoutTitle(workout);
 
-  // Texto previo (warmup): si está vacío, se oculta para no dejar un hueco
-  const warmup = $('#next-warmup');
   warmup.textContent = workout.warmup ?? '';
   warmup.hidden = !workout.warmup;
 
-  $('#next-exercises').replaceChildren(
-    ...workout.exercises.map((exercise) => el('li', {}, exercise))
+  exercises.replaceChildren(
+    ...(workout.exercises ?? []).map((exercise) => {
+      // Compatible con texto suelto ('Burpee 8 reps') y con objeto ({ text, video })
+      const item = typeof exercise === 'string' ? { text: exercise } : exercise;
+      const content = item.video
+        ? el('a', { href: item.video, target: '_blank', rel: 'noopener noreferrer' }, item.text)
+        : item.text;
+      return el('li', {}, content);
+    })
   );
-  $('#next-note').textContent = workout.note;
+  exercises.parentElement.hidden = !workout.exercises?.length;
+
+  note.textContent = workout.note ?? '';
+  note.hidden = !workout.note;
 }
 
 /** Lista de entrenamientos que se pueden elegir en el desplegable del ranking. */
@@ -451,8 +476,11 @@ rankingSelect.addEventListener('change', () => {
   renderRanking();
 });
 
-/** Al cambiar de entrenamiento en el formulario, cambia el formato esperado. */
-workoutSelect.addEventListener('change', updateResultHint);
+/** Al cambiar de entrenamiento en el formulario: pizarra y formato esperado. */
+workoutSelect.addEventListener('change', () => {
+  updateResultHint();
+  renderNextWorkout(workoutSelect.value);
+});
 
 /** Al volver a escribir se limpian el error y el mensaje anterior. */
 function clearErrorOnInput(input) {
