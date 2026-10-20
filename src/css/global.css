@@ -22,6 +22,7 @@
   --color-paper: #f5f5f0;       /* fondo de las tarjetas claras */
   --color-chalk-muted: #a7b3aa; /* texto secundario sobre la pizarra */
   --color-yellow: #facc15;      /* acento: tiza amarilla */
+  --color-green: #1fff32;       /* tiza verde: texto previo del próximo entreno */
   --color-line: #d6d3c7;        /* bordes y separadores suaves */
   --color-wood: #8a6240;        /* marco de la pizarra */
   --color-error: #7f1d1d;
@@ -60,6 +61,11 @@ body {
 
 a {
   color: inherit;
+}
+
+/* El atributo hidden debe ganar a cualquier display de nuestras reglas */
+[hidden] {
+  display: none !important;
 }
 
 /* Indicador de foco visible para quien navega con teclado */
@@ -262,6 +268,11 @@ a {
   padding: 0;
   list-style: none;
   font: 400 clamp(22px, 4vw, 30px)/1.5 var(--font-display);
+}
+
+/* Texto previo (warmup) antes del título: misma tipografía, en verde */
+.board__warmup {
+  color: var(--color-green);
 }
 
 .board__note {

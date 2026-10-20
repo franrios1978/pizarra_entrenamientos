@@ -4,7 +4,7 @@
    Crew WOD · lógica de la página (JavaScript vanilla, sin dependencias)
 
    Índice:
-   1. Datos de ejemplo (atletas, entrenamientos, resultados)
+   1. Datos (en src/data.js)
    2. Tipos de puntuación (cómo se lee, se formatea y se ordena un resultado)
    3. Almacenamiento (localStorage)
    4. Utilidades (fechas, DOM)
@@ -16,52 +16,10 @@
 
 
 /* ==========================================================================
-   1. DATOS DE EJEMPLO
-   Para cambiar de entrenamiento o de grupo basta con editar estas listas.
+   1. DATOS
+   Los datos editables (atletas, entrenamientos, resultados de ejemplo)
+   están en src/data.js, que se carga antes que este archivo.
    ========================================================================== */
-
-const ATHLETES = [
-  { id: 'tu', name: 'Tú' },
-  { id: 'ana', name: 'Ana' },
-  { id: 'dani', name: 'Dani' },
-  { id: 'marta', name: 'Marta' },
-];
-
-// "scoring" indica el tipo de resultado y debe existir en SCORING (sección 2).
-// Las fechas se escriben como AAAA-MM-DD.
-const NEXT_WORKOUT_ID = 'next';
-
-const WORKOUTS = [
-  {
-    id: NEXT_WORKOUT_ID,
-    date: '2026-10-24',
-    time: '10:00',
-    name: "AMRAP 20'",
-    detail: '',
-    scoring: 'rounds',
-    exercises: ['5 dominadas', '10 flexiones', '15 sentadillas'],
-    note: 'Se puntúa por rondas completas.',
-  },
-  { id: 'cindy', date: '2026-10-17', name: 'Cindy', detail: "AMRAP 20'", scoring: 'rounds' },
-  { id: 'fran', date: '2026-10-15', name: 'Fran', detail: '21-15-9', scoring: 'time' },
-  { id: 'circuito', date: '2026-10-14', name: 'Circuito funcional', detail: '', scoring: 'time' },
-  { id: 'dominadas', date: '2026-10-11', name: 'Dominadas', detail: 'máximo seguidas', scoring: 'reps' },
-  { id: 'helen', date: '2026-10-09', name: 'Helen', detail: '3 rondas', scoring: 'time' },
-  { id: 'peso-muerto', date: '2026-10-06', name: 'Peso muerto', detail: '3x5', scoring: 'weight' },
-];
-
-// "value" se guarda siempre como número: rondas, repeticiones, segundos o kg.
-const SEED_RESULTS = [
-  { id: 'seed-1', athleteId: 'dani', workoutId: 'cindy', value: 21, notes: '' },
-  { id: 'seed-2', athleteId: 'ana', workoutId: 'cindy', value: 18, notes: '' },
-  { id: 'seed-3', athleteId: 'tu', workoutId: 'cindy', value: 17, notes: '' },
-  { id: 'seed-4', athleteId: 'marta', workoutId: 'cindy', value: 15, notes: '' },
-  { id: 'seed-5', athleteId: 'tu', workoutId: 'fran', value: 292, notes: '' }, // 4:52
-  { id: 'seed-6', athleteId: 'marta', workoutId: 'circuito', value: 1930, notes: '' }, // 32:10
-  { id: 'seed-7', athleteId: 'marta', workoutId: 'dominadas', value: 12, notes: '' },
-  { id: 'seed-8', athleteId: 'marta', workoutId: 'helen', value: 768, notes: '' }, // 12:48
-  { id: 'seed-9', athleteId: 'marta', workoutId: 'peso-muerto', value: 85, notes: '' },
-];
 
 
 /* ==========================================================================
@@ -156,15 +114,21 @@ function formatTime(totalSeconds) {
 const STORAGE_KEY = 'crewwod:results:v1';
 
 const store = {
-  /** Devuelve los resultados guardados o, si no hay nada válido, los de ejemplo. */
+  /** Devuelve los resultados guardados (lista vacía si no hay nada válido). */
   load() {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      if (Array.isArray(saved)) return saved;
+      if (Array.isArray(saved)) {
+        // Ignora resultados de atletas o entrenamientos que ya no existen en data.js
+        // (por ejemplo datos antiguos guardados antes de editar ATHLETES/WORKOUTS).
+        return saved.filter(
+          (result) => athleteById.has(result.athleteId) && workoutById.has(result.workoutId)
+        );
+      }
     } catch {
-      // Sin acceso a localStorage (modo privado) o JSON dañado: usamos los datos de ejemplo.
+      // Sin acceso a localStorage (modo privado) o JSON dañado: empezamos de cero.
     }
-    return structuredClone(SEED_RESULTS);
+    return [];
   },
 
   /** Guarda la lista completa. Devuelve false si el navegador no lo permite. */
@@ -304,6 +268,9 @@ const athleteSelect = $('#athlete');
 const workoutSelect = $('#workout');
 const resultInput = $('#result');
 const resultHint = $('#result-hint');
+const resultField = $('#result-field');
+const timeInput = $('#tiempo');
+const timeHint = $('#tiempo-hint');
 const formStatus = $('#form-status');
 
 /** Pizarra con el próximo entrenamiento (no cambia mientras se usa la web). */
@@ -315,6 +282,12 @@ function renderNextWorkout() {
   when.dateTime = `${workout.date}T${workout.time}`;
 
   $('#board-title').textContent = workoutTitle(workout);
+
+  // Texto previo (warmup): si está vacío, se oculta para no dejar un hueco
+  const warmup = $('#next-warmup');
+  warmup.textContent = workout.warmup ?? '';
+  warmup.hidden = !workout.warmup;
+
   $('#next-exercises').replaceChildren(
     ...workout.exercises.map((exercise) => el('li', {}, exercise))
   );
@@ -425,12 +398,24 @@ function buildFormOptions() {
   workoutSelect.value = NEXT_WORKOUT_ID;
 }
 
-/** Ajusta el ejemplo y la ayuda del campo según el tipo de entrenamiento elegido. */
+/**
+ * Ajusta el ejemplo y la ayuda del campo según el tipo de entrenamiento elegido.
+ * En los entrenos de tiempo el resultado se escribe en el campo Tiempo
+ * (se oculta Resultado para no pedir lo mismo dos veces).
+ */
 function updateResultHint() {
   const scoring = SCORING[workoutById.get(workoutSelect.value).scoring];
-  resultInput.placeholder = scoring.placeholder;
-  resultHint.textContent = scoring.hint;
+  const isTime = scoring === SCORING.time;
+
+  resultField.hidden = isTime;
+  timeHint.textContent = isTime ? scoring.hint : '';
+
+  if (!isTime) {
+    resultInput.placeholder = scoring.placeholder;
+    resultHint.textContent = scoring.hint;
+  }
   resultInput.removeAttribute('aria-invalid');
+  timeInput.removeAttribute('aria-invalid');
 }
 
 /** Mensaje bajo el formulario. */
@@ -470,17 +455,23 @@ rankingSelect.addEventListener('change', () => {
 workoutSelect.addEventListener('change', updateResultHint);
 
 /** Al volver a escribir se limpian el error y el mensaje anterior. */
-resultInput.addEventListener('input', () => {
-  resultInput.removeAttribute('aria-invalid');
-  if (formStatus.classList.contains('is-error')) showStatus('');
-});
+function clearErrorOnInput(input) {
+  input.addEventListener('input', () => {
+    input.removeAttribute('aria-invalid');
+    if (formStatus.classList.contains('is-error')) showStatus('');
+  });
+}
+clearErrorOnInput(resultInput);
+clearErrorOnInput(timeInput);
 
 /** "Apuntar mi resultado": el enlace ya baja al formulario; aquí preparamos el campo. */
 $('[data-action="focus-form"]').addEventListener('click', () => {
   workoutSelect.value = NEXT_WORKOUT_ID;
   updateResultHint();
   // preventScroll: el desplazamiento suave lo hace el propio enlace
-  resultInput.focus({ preventScroll: true });
+  const focusTarget =
+    workoutById.get(NEXT_WORKOUT_ID).scoring === 'time' ? timeInput : resultInput;
+  focusTarget.focus({ preventScroll: true });
 });
 
 /** Guardar un resultado. */
@@ -492,12 +483,14 @@ form.addEventListener('submit', (event) => {
   const workout = workoutById.get(data.get('workout'));
   const scoring = SCORING[workout.scoring];
 
-  // 1) Validar el resultado según el tipo de entrenamiento
-  const value = scoring.parse(String(data.get('result')));
+  // 1) Validar el resultado: en los entrenos de tiempo se lee del campo Tiempo
+  const isTime = scoring === SCORING.time;
+  const activeInput = isTime ? timeInput : resultInput;
+  const value = scoring.parse(String(data.get(isTime ? 'tiempo' : 'result')));
   if (value === null) {
-    resultInput.setAttribute('aria-invalid', 'true');
+    activeInput.setAttribute('aria-invalid', 'true');
     showStatus(`Resultado no válido. ${scoring.hint}`, true);
-    resultInput.focus();
+    activeInput.focus();
     return;
   }
 
@@ -517,6 +510,7 @@ form.addEventListener('submit', (event) => {
 
   // 4) Limpiar los campos de texto y confirmar al usuario
   resultInput.value = '';
+  timeInput.value = '';
   form.elements.notes.value = '';
 
   const verb = outcome === 'created' ? 'guardado' : 'actualizado';
