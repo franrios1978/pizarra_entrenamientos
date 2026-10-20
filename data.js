@@ -12,7 +12,7 @@
 const NEXT_WORKOUT_ID = "next";
 
 /** Versión de los resultados publicados. SÚBELA (+1) al publicar resultados nuevos. */
-const RESULTS_VERSION = 1;
+const RESULTS_VERSION = 2;
 
 /** Contraseña del panel de administración. */
 const ADMIN_PASSWORD = "Entrenoatope.1978";
