@@ -200,6 +200,7 @@ const state = {
   results: store.load(),
   historyAthleteId: ATHLETES[0].id,
   rankingWorkoutId: null, // se calcula en init()
+  boardWorkoutId: NEXT_WORKOUT_ID, // entrenamiento que se está viendo en la pizarra
 };
 
 /** Entrenamientos del más reciente al más antiguo. */
@@ -259,6 +260,9 @@ const historyChips = $("#history-chips");
 const form = $("#result-form");
 const athleteSelect = $("#athlete");
 const workoutSelect = $("#workout");
+const boardWorkoutSelect = $("#board-workout");
+const boardPastPanel = $("#past-boards");
+const boardPastToggle = $('[data-action="toggle-past"]');
 const resultInput = $("#result");
 const resultHint = $("#result-hint");
 const resultField = $("#result-field");
@@ -277,6 +281,10 @@ function renderNextWorkout(workoutId = NEXT_WORKOUT_ID) {
   const warmup = $("#next-warmup");
   const exercises = $("#next-exercises");
   const note = $("#next-note");
+
+  // Solo el próximo entrenamiento se anuncia como tal; los anteriores son pizarras ya hechas
+  $("#board-label").textContent =
+    workout?.id === NEXT_WORKOUT_ID ? "Próximo entrenamiento" : "Pizarra";
 
   if (!workout) {
     when.textContent = "";
@@ -310,6 +318,35 @@ function renderNextWorkout(workoutId = NEXT_WORKOUT_ID) {
 
   note.textContent = workout.note ?? "";
   note.hidden = !workout.note;
+}
+
+/**
+ * Cambia el entrenamiento que muestra la pizarra y lo deja sincronizado con los
+ * desplegables del formulario y de las pizarras anteriores.
+ */
+function selectWorkout(workoutId) {
+  state.boardWorkoutId = workoutId;
+  workoutSelect.value = workoutId;
+  boardWorkoutSelect.value = workoutId;
+  updateResultHint();
+  renderNextWorkout(workoutId);
+}
+
+/** Opciones de los desplegables de entrenamientos (formulario y pizarras anteriores). */
+function workoutOptions() {
+  return workoutsNewestFirst.map((workout) =>
+    el(
+      "option",
+      { value: workout.id },
+      `${workoutTitle(workout)} · ${formatShortDate(workout.date)}`,
+    ),
+  );
+}
+
+/** Abre o cierra el desplegable de pizarras anteriores. */
+function toggleBoardOptions(open = boardPastPanel.hidden) {
+  boardPastPanel.hidden = !open;
+  boardPastToggle.setAttribute("aria-expanded", String(open));
 }
 
 /** Lista de entrenamientos que se pueden elegir en el desplegable del ranking. */
@@ -412,16 +449,14 @@ function buildFormOptions() {
     ...ATHLETES.map((athlete) => el("option", { value: athlete.id }, athlete.name)),
   );
 
-  workoutSelect.replaceChildren(
-    ...workoutsNewestFirst.map((workout) =>
-      el(
-        "option",
-        { value: workout.id },
-        `${workoutTitle(workout)} · ${formatShortDate(workout.date)}`,
-      ),
-    ),
-  );
+  workoutSelect.replaceChildren(...workoutOptions());
   workoutSelect.value = NEXT_WORKOUT_ID;
+}
+
+/** Rellena el desplegable de pizarras anteriores (una sola vez). */
+function buildBoardOptions() {
+  boardWorkoutSelect.replaceChildren(...workoutOptions());
+  boardWorkoutSelect.value = state.boardWorkoutId;
 }
 
 /**
@@ -478,8 +513,33 @@ rankingSelect.addEventListener("change", () => {
 
 /** Al cambiar de entrenamiento en el formulario: pizarra y formato esperado. */
 workoutSelect.addEventListener("change", () => {
-  updateResultHint();
-  renderNextWorkout(workoutSelect.value);
+  selectWorkout(workoutSelect.value);
+});
+
+/** "Anteriores Pizarras": abre el desplegable con las pizarras anteriores. */
+boardPastToggle.addEventListener("click", (event) => {
+  event.preventDefault();
+  toggleBoardOptions();
+});
+
+/** Al elegir una pizarra anterior, la pizarra se actualiza como si se eligiera en el formulario. */
+boardWorkoutSelect.addEventListener("change", () => {
+  selectWorkout(boardWorkoutSelect.value);
+  toggleBoardOptions(false);
+});
+
+/** Clic fuera del desplegable: se cierra. */
+document.addEventListener("click", (event) => {
+  if (boardPastPanel.hidden) return;
+  if (!event.target.closest(".board__actions--top")) toggleBoardOptions(false);
+});
+
+/** Escape: se cierra el desplegable y el foco vuelve al botón. */
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !boardPastPanel.hidden) {
+    toggleBoardOptions(false);
+    boardPastToggle.focus();
+  }
 });
 
 /** Al volver a escribir se limpian el error y el mensaje anterior. */
@@ -494,8 +554,8 @@ clearErrorOnInput(timeInput);
 
 /** "Apuntar mi resultado": el enlace ya baja al formulario; aquí preparamos el campo. */
 $('[data-action="focus-form"]').addEventListener("click", () => {
-  workoutSelect.value = NEXT_WORKOUT_ID;
-  updateResultHint();
+  // La pizarra vuelve al próximo entrenamiento, para que cuadre con el formulario
+  selectWorkout(NEXT_WORKOUT_ID);
   // preventScroll: el desplazamiento suave lo hace el propio enlace
   const focusTarget = workoutById.get(NEXT_WORKOUT_ID).scoring === "time" ? timeInput : resultInput;
   focusTarget.focus({ preventScroll: true });
@@ -693,6 +753,7 @@ function init() {
   renderNextWorkout();
   buildHistoryChips();
   buildFormOptions();
+  buildBoardOptions();
   updateResultHint();
   renderAll();
 }

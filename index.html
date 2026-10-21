@@ -51,7 +51,28 @@
       <div class="row row--stretch">
         <!-- El contenido lo rellena main.js a partir del objeto del próximo entrenamiento (src/data.js) -->
         <section id="pizarra" class="board col-main" aria-labelledby="board-title">
-          <p class="board__meta">Próximo entrenamiento · <time id="next-date"></time></p>
+          <!-- Cabecera de la pizarra: la fecha a la izquierda y las pizarras anteriores a la derecha -->
+          <div class="board__head">
+            <p class="board__meta">
+              <span id="board-label">Próximo entrenamiento</span> · <time id="next-date"></time>
+            </p>
+            <div class="board__actions board__actions--top">
+              <!-- Abre el desplegable con las pizarras anteriores -->
+              <a
+                class="btn btn--ghost"
+                href="#pizarra"
+                data-action="toggle-past"
+                aria-expanded="false"
+                aria-controls="past-boards"
+                ><span class="btn__arrow" aria-hidden="true">→</span> Anteriores Pizarras</a
+              >
+              <!-- Mismas opciones y mismo comportamiento que el desplegable del formulario -->
+              <div class="board__past" id="past-boards" hidden>
+                <label class="board__past__label" for="board-workout">Pizarras anteriores</label>
+                <select class="control" id="board-workout"></select>
+              </div>
+            </div>
+          </div>
           <p class="board__exercises board__warmup" id="next-warmup"></p>
           <h1 class="board__title" id="board-title"></h1>
           <div id="next-exercises-wrap">

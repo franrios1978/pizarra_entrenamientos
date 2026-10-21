@@ -12,22 +12,22 @@
    9. Ranking
   10. Historial (chips + tabla)
   11. Formulario
-  ========================================================================== */
+   ========================================================================== */
 
 /* 1. Variables ------------------------------------------------------------ */
 :root {
-  --color-bg: #e9e6dc; /* fondo de la página */
-  --color-ink: #1f2a24; /* verde pizarra: texto y fondos oscuros */
-  --color-paper: #f5f5f0; /* fondo de las tarjetas claras */
+  --color-bg: #e9e6dc;          /* fondo de la página */
+  --color-ink: #1f2a24;         /* verde pizarra: texto y fondos oscuros */
+  --color-paper: #f5f5f0;       /* fondo de las tarjetas claras */
   --color-chalk-muted: #a7b3aa; /* texto secundario sobre la pizarra */
-  --color-yellow: #facc15; /* acento: tiza amarilla */
-  --color-green: #1fff32; /* tiza verde: texto previo del próximo entreno */
-  --color-line: #d6d3c7; /* bordes y separadores suaves */
-  --color-wood: #8a6240; /* marco de la pizarra */
+  --color-yellow: #facc15;      /* acento: tiza amarilla */
+  --color-green: #1fff32;       /* tiza verde: texto previo del próximo entreno */
+  --color-line: #d6d3c7;        /* bordes y separadores suaves */
+  --color-wood: #8a6240;        /* marco de la pizarra */
   --color-error: #7f1d1d;
 
-  --font-display: "Permanent Marker", cursive;
-  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: 'Permanent Marker', cursive;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   --radius: 12px;
   --radius-sm: 8px;
@@ -168,12 +168,8 @@ a {
   gap: var(--gap);
 }
 
-.row--stretch {
-  align-items: stretch;
-}
-.row--start {
-  align-items: flex-start;
-}
+.row--stretch { align-items: stretch; }
+.row--start { align-items: flex-start; }
 
 /* Columna ancha (3 partes) y columna estrecha (2 partes).
    El tercer valor es el ancho mínimo antes de saltar de línea.
@@ -220,6 +216,26 @@ a {
   background: #33443a;
 }
 
+/* Botón secundario: sin bordes y con la misma fuente de tiza que los ejercicios */
+.btn--ghost {
+  gap: 6px;
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-chalk-muted);
+  font: 400 clamp(20px, 2.2vw, 26px)/1.2 var(--font-display);
+}
+
+.btn--ghost:hover {
+  color: var(--color-paper);
+}
+
+/* Flecha del botón de pizarras anteriores: un poco mayor que el texto */
+.btn__arrow {
+  font-size: 1.3em;
+  line-height: 1;
+}
+
 /* 7. Tarjetas ------------------------------------------------------------- */
 .card {
   display: flex;
@@ -253,10 +269,20 @@ a {
 
 .board__meta {
   margin: 0;
+  flex: 1 1 auto;
   font-size: 14px;
   letter-spacing: 3px;
   text-transform: uppercase;
   color: var(--color-chalk-muted);
+}
+
+/* Cabecera de la pizarra: la fecha a la izquierda y el enlace a la derecha.
+   En pantallas estrechas el enlace baja a su propia línea. */
+.board__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px 16px;
 }
 
 .board__title {
@@ -300,6 +326,36 @@ a {
   flex-wrap: wrap;
   gap: 12px;
   margin-top: auto;
+}
+
+/* La variante de la cabecera no se empuja al final (margin-top: auto)
+   y se mantiene pegada a la derecha */
+.board__actions--top {
+  position: relative;
+  margin-top: 0;
+  margin-left: auto;
+}
+
+/* Desplegable de pizarras anteriores: se abre bajo el botón sin mover la pizarra */
+.board__past {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: max-content;
+  max-width: min(320px, 80vw);
+  padding: 12px;
+  background: var(--color-paper);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 35%);
+}
+
+.board__past__label {
+  font-size: 13px;
+  font-weight: 600;
 }
 
 /* 9. Ranking -------------------------------------------------------------- */
