@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 /* ==========================================================================
    Crew WOD · lógica de la página (JavaScript vanilla, sin dependencias)
@@ -14,13 +14,11 @@
    8. Arranque
    ========================================================================== */
 
-
 /* ==========================================================================
    1. DATOS
    Los datos editables (atletas, entrenamientos, resultados de ejemplo)
    están en src/data.js, que se carga antes que este archivo.
    ========================================================================== */
-
 
 /* ==========================================================================
    2. TIPOS DE PUNTUACIÓN
@@ -35,30 +33,30 @@ const SCORING = {
   rounds: {
     higherIsBetter: true,
     parse: parseWholeNumber,
-    format: (n) => `${n} ${n === 1 ? 'ronda' : 'rondas'}`,
-    placeholder: 'Ej.: 18',
-    hint: 'Rondas completas (número entero).',
+    format: (n) => `${n} ${n === 1 ? "ronda" : "rondas"}`,
+    placeholder: "Ej.: 18",
+    hint: "Rondas completas (número entero).",
   },
   reps: {
     higherIsBetter: true,
     parse: parseWholeNumber,
     format: (n) => `${n} reps`,
-    placeholder: 'Ej.: 12',
-    hint: 'Repeticiones (número entero).',
+    placeholder: "Ej.: 12",
+    hint: "Repeticiones (número entero).",
   },
   time: {
     higherIsBetter: false, // en un tiempo gana el más bajo
     parse: parseTime,
     format: formatTime,
-    placeholder: 'Ej.: 12:48',
-    hint: 'Tiempo en mm:ss (o h:mm:ss).',
+    placeholder: "Ej.: 12:48",
+    hint: "Tiempo en mm:ss (o h:mm:ss).",
   },
   weight: {
     higherIsBetter: true,
     parse: parseDecimal,
-    format: (kg) => `${kg.toLocaleString('es-ES')} kg`,
-    placeholder: 'Ej.: 85',
-    hint: 'Peso en kg (admite decimales: 82,5).',
+    format: (kg) => `${kg.toLocaleString("es-ES")} kg`,
+    placeholder: "Ej.: 85",
+    hint: "Peso en kg (admite decimales: 82,5).",
   },
 };
 
@@ -70,7 +68,7 @@ function parseWholeNumber(text) {
 
 /** "82,5" o "82.5" -> 82.5. Devuelve null si no es un número positivo razonable. */
 function parseDecimal(text) {
-  const clean = text.trim().replace(',', '.');
+  const clean = text.trim().replace(",", ".");
   return /^\d{1,3}(\.\d{1,2})?$/.test(clean) && Number(clean) > 0 ? Number(clean) : null;
 }
 
@@ -94,13 +92,10 @@ function formatTime(totalSeconds) {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  const ss = String(seconds).padStart(2, '0');
+  const ss = String(seconds).padStart(2, "0");
 
-  return hours > 0
-    ? `${hours}:${String(minutes).padStart(2, '0')}:${ss}`
-    : `${minutes}:${ss}`;
+  return hours > 0 ? `${hours}:${String(minutes).padStart(2, "0")}:${ss}` : `${minutes}:${ss}`;
 }
-
 
 /* ==========================================================================
    3. ALMACENAMIENTO
@@ -111,7 +106,7 @@ function formatTime(totalSeconds) {
    así que bastará con reescribir load() y save() cuando llegue ese momento.
    ========================================================================== */
 
-const STORAGE_KEY = 'crewwod:results';
+const STORAGE_KEY = "crewwod:results";
 
 const store = {
   /** Devuelve los resultados guardados o los iniciales (SEED_RESULTS) si no hay nada válido. */
@@ -123,7 +118,7 @@ const store = {
         // Ignora resultados de atletas o entrenamientos que ya no existen en data.js
         // (por ejemplo datos antiguos guardados antes de editar ATHLETES/WORKOUTS).
         return saved.results.filter(
-          (result) => athleteById.has(result.athleteId) && workoutById.has(result.workoutId)
+          (result) => athleteById.has(result.athleteId) && workoutById.has(result.workoutId),
         );
       }
     } catch {
@@ -142,7 +137,6 @@ const store = {
     }
   },
 };
-
 
 /* ==========================================================================
    4. UTILIDADES
@@ -166,34 +160,33 @@ function el(tag, attrs = {}, ...children) {
 }
 
 /** "2026-10-24" (+ hora opcional) -> Date en hora local. */
-function toDate(isoDate, time = '00:00') {
+function toDate(isoDate, time = "00:00") {
   return new Date(`${isoDate}T${time}`);
 }
 
 /** "2026-10-14" -> "14 oct". */
 function formatShortDate(isoDate) {
   return toDate(isoDate)
-    .toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
-    .replace('.', '');
+    .toLocaleDateString("es-ES", { day: "numeric", month: "short" })
+    .replace(".", "");
 }
 
 /** "2026-10-24" -> "sáb 24 oct". */
 function formatLongDate(isoDate) {
   return toDate(isoDate)
-    .toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })
-    .replace(/[.,]/g, '');
+    .toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short" })
+    .replace(/[.,]/g, "");
 }
 
 /** Título completo de un entrenamiento: "Cindy · AMRAP 20'". */
 function workoutTitle(workout) {
-  return [workout.name, workout.detail].filter(Boolean).join(' · ');
+  return [workout.name, workout.detail].filter(Boolean).join(" · ");
 }
 
 /** ID único sencillo para cada resultado nuevo. */
 function makeId() {
   return `r-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 }
-
 
 /* ==========================================================================
    5. ESTADO Y CONSULTAS
@@ -207,6 +200,7 @@ const state = {
   results: store.load(),
   historyAthleteId: ATHLETES[0].id,
   rankingWorkoutId: null, // se calcula en init()
+  boardWorkoutId: NEXT_WORKOUT_ID, // entrenamiento que se está viendo en la pizarra
 };
 
 /** Entrenamientos del más reciente al más antiguo. */
@@ -215,7 +209,7 @@ const workoutsNewestFirst = [...WORKOUTS].sort((a, b) => b.date.localeCompare(a.
 /** Entrenamientos que ya tienen al menos un resultado (para el ranking). */
 function workoutsWithResults() {
   return workoutsNewestFirst.filter((workout) =>
-    state.results.some((result) => result.workoutId === workout.id)
+    state.results.some((result) => result.workoutId === workout.id),
   );
 }
 
@@ -244,35 +238,37 @@ function buildRanking(workoutId) {
  */
 function saveResult({ athleteId, workoutId, value, notes }) {
   const existing = state.results.find(
-    (result) => result.athleteId === athleteId && result.workoutId === workoutId
+    (result) => result.athleteId === athleteId && result.workoutId === workoutId,
   );
 
   if (existing) {
     Object.assign(existing, { value, notes });
-    return 'updated';
+    return "updated";
   }
 
   state.results.push({ id: makeId(), athleteId, workoutId, value, notes });
-  return 'created';
+  return "created";
 }
-
 
 /* ==========================================================================
    6. PINTADO
    ========================================================================== */
 
 // Referencias al DOM que se usan varias veces
-const rankingSelect = $('#ranking-workout');
-const historyChips = $('#history-chips');
-const form = $('#result-form');
-const athleteSelect = $('#athlete');
-const workoutSelect = $('#workout');
-const resultInput = $('#result');
-const resultHint = $('#result-hint');
-const resultField = $('#result-field');
-const timeInput = $('#tiempo');
-const timeHint = $('#tiempo-hint');
-const formStatus = $('#form-status');
+const rankingSelect = $("#ranking-workout");
+const historyChips = $("#history-chips");
+const form = $("#result-form");
+const athleteSelect = $("#athlete");
+const workoutSelect = $("#workout");
+const boardWorkoutSelect = $("#board-workout");
+const boardPastPanel = $("#past-boards");
+const boardPastToggle = $('[data-action="toggle-past"]');
+const resultInput = $("#result");
+const resultHint = $("#result-hint");
+const resultField = $("#result-field");
+const timeInput = $("#tiempo");
+const timeHint = $("#tiempo-hint");
+const formStatus = $("#form-status");
 
 /**
  * Pizarra. Por defecto muestra el próximo entrenamiento; si se le pasa un id,
@@ -281,83 +277,120 @@ const formStatus = $('#form-status');
  */
 function renderNextWorkout(workoutId = NEXT_WORKOUT_ID) {
   const workout = workoutById.get(workoutId);
-  const when = $('#next-date');
-  const warmup = $('#next-warmup');
-  const exercises = $('#next-exercises');
-  const note = $('#next-note');
+  const when = $("#next-date");
+  const warmup = $("#next-warmup");
+  const exercises = $("#next-exercises");
+  const note = $("#next-note");
+
+  // Solo el próximo entrenamiento se anuncia como tal; los anteriores son pizarras ya hechas
+  $("#board-label").textContent =
+    workout?.id === NEXT_WORKOUT_ID ? "Próximo entrenamiento" : "Pizarra";
 
   if (!workout) {
-    when.textContent = '';
-    when.dateTime = '';
-    $('#board-title').textContent = 'Entrenamiento no encontrado';
+    when.textContent = "";
+    when.dateTime = "";
+    $("#board-title").textContent = "Entrenamiento no encontrado";
     warmup.hidden = true;
     exercises.parentElement.hidden = true;
     note.hidden = true;
     return;
   }
 
-  when.textContent = `${formatLongDate(workout.date)}${workout.time ? ` · ${workout.time}` : ''}`;
+  when.textContent = `${formatLongDate(workout.date)}${workout.time ? ` · ${workout.time}` : ""}`;
   when.dateTime = workout.time ? `${workout.date}T${workout.time}` : workout.date;
 
-  $('#board-title').textContent = workoutTitle(workout);
+  $("#board-title").textContent = workoutTitle(workout);
 
-  warmup.textContent = workout.warmup ?? '';
+  warmup.textContent = workout.warmup ?? "";
   warmup.hidden = !workout.warmup;
 
   exercises.replaceChildren(
     ...(workout.exercises ?? []).map((exercise) => {
       // Compatible con texto suelto ('Burpee 8 reps') y con objeto ({ text, video })
-      const item = typeof exercise === 'string' ? { text: exercise } : exercise;
+      const item = typeof exercise === "string" ? { text: exercise } : exercise;
       const content = item.video
-        ? el('a', { href: item.video, target: '_blank', rel: 'noopener noreferrer' }, item.text)
+        ? el("a", { href: item.video, target: "_blank", rel: "noopener noreferrer" }, item.text)
         : item.text;
-      return el('li', {}, content);
-    })
+      return el("li", {}, content);
+    }),
   );
   exercises.parentElement.hidden = !workout.exercises?.length;
 
-  note.textContent = workout.note ?? '';
+  note.textContent = workout.note ?? "";
   note.hidden = !workout.note;
+}
+
+/**
+ * Cambia el entrenamiento que muestra la pizarra y lo deja sincronizado con los
+ * desplegables del formulario y de las pizarras anteriores.
+ */
+function selectWorkout(workoutId) {
+  state.boardWorkoutId = workoutId;
+  workoutSelect.value = workoutId;
+  boardWorkoutSelect.value = workoutId;
+  updateResultHint();
+  renderNextWorkout(workoutId);
+}
+
+/** Opciones de los desplegables de entrenamientos (formulario y pizarras anteriores). */
+function workoutOptions() {
+  return workoutsNewestFirst.map((workout) =>
+    el(
+      "option",
+      { value: workout.id },
+      `${workoutTitle(workout)} · ${formatShortDate(workout.date)}`,
+    ),
+  );
+}
+
+/** Abre o cierra el desplegable de pizarras anteriores. */
+function toggleBoardOptions(open = boardPastPanel.hidden) {
+  boardPastPanel.hidden = !open;
+  boardPastToggle.setAttribute("aria-expanded", String(open));
 }
 
 /** Lista de entrenamientos que se pueden elegir en el desplegable del ranking. */
 function renderRankingOptions() {
   rankingSelect.replaceChildren(
     ...workoutsWithResults().map((workout) =>
-      el('option', { value: workout.id }, `${workoutTitle(workout)} · ${formatShortDate(workout.date)}`)
-    )
+      el(
+        "option",
+        { value: workout.id },
+        `${workoutTitle(workout)} · ${formatShortDate(workout.date)}`,
+      ),
+    ),
   );
 }
 
 /** Ranking del entrenamiento seleccionado. */
 function renderRanking() {
-  const list = $('#ranking-list');
+  const list = $("#ranking-list");
   const workout = workoutById.get(state.rankingWorkoutId);
 
   if (!workout) {
-    $('#ranking-title').textContent = 'Ranking';
-    list.replaceChildren(el('li', { class: 'ranking__empty' }, 'Todavía no hay resultados.'));
+    $("#ranking-title").textContent = "Ranking";
+    list.replaceChildren(el("li", { class: "ranking__empty" }, "Todavía no hay resultados."));
     rankingSelect.disabled = true;
     return;
   }
 
   const scoring = SCORING[workout.scoring];
-  $('#ranking-title').textContent = `Ranking · ${workout.name} (${formatShortDate(workout.date)})`;
+  $("#ranking-title").textContent = `Ranking · ${workout.name} (${formatShortDate(workout.date)})`;
 
   list.replaceChildren(
     ...buildRanking(workout.id).map((entry) =>
       el(
-        'li',
-        { class: 'ranking__item' },
+        "li",
+        { class: "ranking__item" },
         el(
-          'span',
-          { class: entry.rank === 1 ? 'ranking__pos ranking__pos--first' : 'ranking__pos' },
-          String(entry.rank)
+          "span",
+          { class: entry.rank === 1 ? "ranking__pos ranking__pos--first" : "ranking__pos" },
+          String(entry.rank),
         ),
-        el('span', { class: 'ranking__name' }, athleteById.get(entry.athleteId).name),
-        el('span', { class: 'ranking__score' }, scoring.format(entry.value))
-      )
-    )
+        el("span", { class: "ranking__name" }, athleteById.get(entry.athleteId).name),
+        el("span", { class: "ranking__score" }, scoring.format(entry.value)),
+      ),
+    ),
   );
 
   rankingSelect.disabled = false;
@@ -368,8 +401,8 @@ function renderRanking() {
 function buildHistoryChips() {
   historyChips.replaceChildren(
     ...ATHLETES.map((athlete) =>
-      el('button', { type: 'button', class: 'chip', 'data-athlete': athlete.id }, athlete.name)
-    )
+      el("button", { type: "button", class: "chip", "data-athlete": athlete.id }, athlete.name),
+    ),
   );
 }
 
@@ -377,11 +410,11 @@ function buildHistoryChips() {
 function renderHistory() {
   // Marca el botón activo (aria-pressed también lo anuncian los lectores de pantalla)
   for (const chip of historyChips.children) {
-    chip.setAttribute('aria-pressed', String(chip.dataset.athlete === state.historyAthleteId));
+    chip.setAttribute("aria-pressed", String(chip.dataset.athlete === state.historyAthleteId));
   }
 
   const athlete = athleteById.get(state.historyAthleteId);
-  $('#history-caption').textContent = `Resultados de ${athlete.name}`;
+  $("#history-caption").textContent = `Resultados de ${athlete.name}`;
 
   const rows = state.results
     .filter((result) => result.athleteId === state.historyAthleteId)
@@ -389,39 +422,41 @@ function renderHistory() {
     .sort((a, b) => b.workout.date.localeCompare(a.workout.date))
     .map(({ result, workout }) =>
       el(
-        'tr',
+        "tr",
         {},
-        el('td', {}, el('time', { datetime: workout.date }, formatShortDate(workout.date))),
+        el("td", {}, el("time", { datetime: workout.date }, formatShortDate(workout.date))),
         el(
-          'td',
+          "td",
           {},
           workoutTitle(workout),
           // Las notas solo se muestran si existen
-          ...(result.notes ? [el('span', { class: 'results__notes' }, result.notes)] : [])
+          ...(result.notes ? [el("span", { class: "results__notes" }, result.notes)] : []),
         ),
-        el('td', { class: 'results__value' }, SCORING[workout.scoring].format(result.value))
-      )
+        el("td", { class: "results__value" }, SCORING[workout.scoring].format(result.value)),
+      ),
     );
 
-  $('#history-body').replaceChildren(
+  $("#history-body").replaceChildren(
     ...(rows.length
       ? rows
-      : [el('tr', {}, el('td', { colspan: '3' }, `${athlete.name} todavía no tiene resultados.`))])
+      : [el("tr", {}, el("td", { colspan: "3" }, `${athlete.name} todavía no tiene resultados.`))]),
   );
 }
 
 /** Rellena los desplegables del formulario (una sola vez). */
 function buildFormOptions() {
   athleteSelect.replaceChildren(
-    ...ATHLETES.map((athlete) => el('option', { value: athlete.id }, athlete.name))
+    ...ATHLETES.map((athlete) => el("option", { value: athlete.id }, athlete.name)),
   );
 
-  workoutSelect.replaceChildren(
-    ...workoutsNewestFirst.map((workout) =>
-      el('option', { value: workout.id }, `${workoutTitle(workout)} · ${formatShortDate(workout.date)}`)
-    )
-  );
+  workoutSelect.replaceChildren(...workoutOptions());
   workoutSelect.value = NEXT_WORKOUT_ID;
+}
+
+/** Rellena el desplegable de pizarras anteriores (una sola vez). */
+function buildBoardOptions() {
+  boardWorkoutSelect.replaceChildren(...workoutOptions());
+  boardWorkoutSelect.value = state.boardWorkoutId;
 }
 
 /**
@@ -434,20 +469,20 @@ function updateResultHint() {
   const isTime = scoring === SCORING.time;
 
   resultField.hidden = isTime;
-  timeHint.textContent = isTime ? scoring.hint : '';
+  timeHint.textContent = isTime ? scoring.hint : "";
 
   if (!isTime) {
     resultInput.placeholder = scoring.placeholder;
     resultHint.textContent = scoring.hint;
   }
-  resultInput.removeAttribute('aria-invalid');
-  timeInput.removeAttribute('aria-invalid');
+  resultInput.removeAttribute("aria-invalid");
+  timeInput.removeAttribute("aria-invalid");
 }
 
 /** Mensaje bajo el formulario. */
 function showStatus(message, isError = false) {
   formStatus.textContent = message;
-  formStatus.classList.toggle('is-error', isError);
+  formStatus.classList.toggle("is-error", isError);
 }
 
 /** Repinta las zonas que dependen de los resultados. */
@@ -457,14 +492,13 @@ function renderAll() {
   renderHistory();
 }
 
-
 /* ==========================================================================
    7. EVENTOS
    ========================================================================== */
 
 /** Cambiar de persona en el historial (delegación: un solo listener para todos los botones). */
-historyChips.addEventListener('click', (event) => {
-  const chip = event.target.closest('button[data-athlete]');
+historyChips.addEventListener("click", (event) => {
+  const chip = event.target.closest("button[data-athlete]");
   if (!chip) return;
 
   state.historyAthleteId = chip.dataset.athlete;
@@ -472,52 +506,76 @@ historyChips.addEventListener('click', (event) => {
 });
 
 /** Cambiar de ranking desde el desplegable. */
-rankingSelect.addEventListener('change', () => {
+rankingSelect.addEventListener("change", () => {
   state.rankingWorkoutId = rankingSelect.value;
   renderRanking();
 });
 
 /** Al cambiar de entrenamiento en el formulario: pizarra y formato esperado. */
-workoutSelect.addEventListener('change', () => {
-  updateResultHint();
-  renderNextWorkout(workoutSelect.value);
+workoutSelect.addEventListener("change", () => {
+  selectWorkout(workoutSelect.value);
+});
+
+/** "Anteriores Pizarras": abre el desplegable con las pizarras anteriores. */
+boardPastToggle.addEventListener("click", (event) => {
+  event.preventDefault();
+  toggleBoardOptions();
+});
+
+/** Al elegir una pizarra anterior, la pizarra se actualiza como si se eligiera en el formulario. */
+boardWorkoutSelect.addEventListener("change", () => {
+  selectWorkout(boardWorkoutSelect.value);
+  toggleBoardOptions(false);
+});
+
+/** Clic fuera del desplegable: se cierra. */
+document.addEventListener("click", (event) => {
+  if (boardPastPanel.hidden) return;
+  if (!event.target.closest(".board__actions--top")) toggleBoardOptions(false);
+});
+
+/** Escape: se cierra el desplegable y el foco vuelve al botón. */
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !boardPastPanel.hidden) {
+    toggleBoardOptions(false);
+    boardPastToggle.focus();
+  }
 });
 
 /** Al volver a escribir se limpian el error y el mensaje anterior. */
 function clearErrorOnInput(input) {
-  input.addEventListener('input', () => {
-    input.removeAttribute('aria-invalid');
-    if (formStatus.classList.contains('is-error')) showStatus('');
+  input.addEventListener("input", () => {
+    input.removeAttribute("aria-invalid");
+    if (formStatus.classList.contains("is-error")) showStatus("");
   });
 }
 clearErrorOnInput(resultInput);
 clearErrorOnInput(timeInput);
 
 /** "Apuntar mi resultado": el enlace ya baja al formulario; aquí preparamos el campo. */
-$('[data-action="focus-form"]').addEventListener('click', () => {
-  workoutSelect.value = NEXT_WORKOUT_ID;
-  updateResultHint();
+$('[data-action="focus-form"]').addEventListener("click", () => {
+  // La pizarra vuelve al próximo entrenamiento, para que cuadre con el formulario
+  selectWorkout(NEXT_WORKOUT_ID);
   // preventScroll: el desplazamiento suave lo hace el propio enlace
-  const focusTarget =
-    workoutById.get(NEXT_WORKOUT_ID).scoring === 'time' ? timeInput : resultInput;
+  const focusTarget = workoutById.get(NEXT_WORKOUT_ID).scoring === "time" ? timeInput : resultInput;
   focusTarget.focus({ preventScroll: true });
 });
 
 /** Guardar un resultado. */
-form.addEventListener('submit', (event) => {
+form.addEventListener("submit", (event) => {
   event.preventDefault(); // evitamos que el navegador recargue la página
 
   const data = new FormData(form);
-  const athleteId = data.get('athlete');
-  const workout = workoutById.get(data.get('workout'));
+  const athleteId = data.get("athlete");
+  const workout = workoutById.get(data.get("workout"));
   const scoring = SCORING[workout.scoring];
 
   // 1) Validar el resultado: en los entrenos de tiempo se lee del campo Tiempo
   const isTime = scoring === SCORING.time;
   const activeInput = isTime ? timeInput : resultInput;
-  const value = scoring.parse(String(data.get(isTime ? 'tiempo' : 'result')));
+  const value = scoring.parse(String(data.get(isTime ? "tiempo" : "result")));
   if (value === null) {
-    activeInput.setAttribute('aria-invalid', 'true');
+    activeInput.setAttribute("aria-invalid", "true");
     showStatus(`Resultado no válido. ${scoring.hint}`, true);
     activeInput.focus();
     return;
@@ -528,7 +586,7 @@ form.addEventListener('submit', (event) => {
     athleteId,
     workoutId: workout.id,
     value,
-    notes: String(data.get('notes')).trim(),
+    notes: String(data.get("notes")).trim(),
   });
   const persisted = store.save(state.results);
 
@@ -538,20 +596,19 @@ form.addEventListener('submit', (event) => {
   renderAll();
 
   // 4) Limpiar los campos de texto y confirmar al usuario
-  resultInput.value = '';
-  timeInput.value = '';
-  form.elements.notes.value = '';
+  resultInput.value = "";
+  timeInput.value = "";
+  form.elements.notes.value = "";
 
-  const verb = outcome === 'created' ? 'guardado' : 'actualizado';
+  const verb = outcome === "created" ? "guardado" : "actualizado";
   const name = athleteById.get(athleteId).name;
   showStatus(
     persisted
       ? `${name}: resultado ${verb} (${scoring.format(value)}).`
       : `${name}: resultado ${verb}, pero no se ha podido guardar en este navegador.`,
-    !persisted
+    !persisted,
   );
 });
-
 
 /* ==========================================================================
    8. PANEL DE ADMINISTRACIÓN
@@ -562,14 +619,14 @@ form.addEventListener('submit', (event) => {
    Sirve para operar cómodo, no como seguridad real.
    ========================================================================== */
 
-const ADMIN_SESSION_KEY = 'crewwod:admin';
-const adminPanel = $('#admin-panel');
-const adminLogin = $('#admin-login');
-const adminPassword = $('#admin-password');
-const adminLoginBtn = $('#admin-login-btn');
-const adminLoginMsg = $('#admin-login-msg');
-const adminDialog = $('#admin-dialog');
-const adminStatus = $('#admin-status');
+const ADMIN_SESSION_KEY = "crewwod:admin";
+const adminPanel = $("#admin-panel");
+const adminLogin = $("#admin-login");
+const adminPassword = $("#admin-password");
+const adminLoginBtn = $("#admin-login-btn");
+const adminLoginMsg = $("#admin-login-msg");
+const adminDialog = $("#admin-dialog");
+const adminStatus = $("#admin-status");
 
 /** Muestra el panel de administración (identificado). */
 function showAdminPanel() {
@@ -581,12 +638,12 @@ function showAdminPanel() {
 /** Comprueba la contraseña escrita. */
 function tryAdminLogin() {
   if (adminPassword.value === ADMIN_PASSWORD) {
-    sessionStorage.setItem(ADMIN_SESSION_KEY, '1');
-    adminPassword.value = '';
+    sessionStorage.setItem(ADMIN_SESSION_KEY, "1");
+    adminPassword.value = "";
     showAdminPanel();
   } else {
-    adminLoginMsg.textContent = 'Contraseña incorrecta.';
-    adminPassword.value = '';
+    adminLoginMsg.textContent = "Contraseña incorrecta.";
+    adminPassword.value = "";
     adminPassword.focus();
   }
 }
@@ -604,7 +661,7 @@ function buildDataFile() {
 
 /* ==========================================================================
    Crew WOD · DATOS EDITABLES
-   Generado automáticamente el ${new Date().toLocaleString('es-ES')}.
+   Generado automáticamente el ${new Date().toLocaleString("es-ES")}.
    ========================================================================== */
 
 /** ID del próximo entrenamiento (el que se muestra en la pizarra). */
@@ -632,7 +689,7 @@ const SEED_RESULTS = ${JSON.stringify(
       notes,
     })),
     null,
-    2
+    2,
   )};
 `;
 
@@ -641,9 +698,9 @@ const SEED_RESULTS = ${JSON.stringify(
 
 /** Descarga el data.js generado. */
 function downloadDataFile() {
-  const blob = new Blob([buildDataFile()], { type: 'text/javascript' });
+  const blob = new Blob([buildDataFile()], { type: "text/javascript" });
   const url = URL.createObjectURL(blob);
-  const link = el('a', { href: url, download: 'data.js' });
+  const link = el("a", { href: url, download: "data.js" });
   document.body.append(link);
   link.click();
   link.remove();
@@ -652,40 +709,39 @@ function downloadDataFile() {
   adminStatus.textContent =
     `data.js descargado con ${state.results.length} resultado(s) y versión ` +
     `${RESULTS_VERSION + 1} (la versión se sube sola). ` +
-    'Ahora sustitúyelo en src/data.js y haz commit y push.';
+    "Ahora sustitúyelo en src/data.js y haz commit y push.";
 }
 
 // Abrir el panel desde el botón discreto del pie
-$('[data-action="open-admin"]').addEventListener('click', () => {
-  if (sessionStorage.getItem(ADMIN_SESSION_KEY) === '1') {
+$('[data-action="open-admin"]').addEventListener("click", () => {
+  if (sessionStorage.getItem(ADMIN_SESSION_KEY) === "1") {
     showAdminPanel();
     adminDialog.showModal();
   } else {
     adminDialog.showModal();
     adminLogin.hidden = false;
     adminPanel.hidden = true;
-    adminLoginMsg.textContent = '';
+    adminLoginMsg.textContent = "";
     adminPassword.focus();
   }
 });
 
-adminLoginBtn.addEventListener('click', tryAdminLogin);
-adminPassword.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter') {
+adminLoginBtn.addEventListener("click", tryAdminLogin);
+adminPassword.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
     event.preventDefault();
     tryAdminLogin();
   }
 });
 
-$('#admin-generate').addEventListener('click', downloadDataFile);
-$('#admin-logout').addEventListener('click', () => {
+$("#admin-generate").addEventListener("click", downloadDataFile);
+$("#admin-logout").addEventListener("click", () => {
   sessionStorage.removeItem(ADMIN_SESSION_KEY);
   adminDialog.close();
   adminLogin.hidden = false;
   adminPanel.hidden = true;
-  adminStatus.textContent = '';
+  adminStatus.textContent = "";
 });
-
 
 /* ==========================================================================
    9. ARRANQUE
@@ -697,6 +753,7 @@ function init() {
   renderNextWorkout();
   buildHistoryChips();
   buildFormOptions();
+  buildBoardOptions();
   updateResultHint();
   renderAll();
 }

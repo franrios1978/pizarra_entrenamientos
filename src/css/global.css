@@ -12,8 +12,7 @@
    9. Ranking
   10. Historial (chips + tabla)
   11. Formulario
-  ========================================================================== */
-
+   ========================================================================== */
 
 /* 1. Variables ------------------------------------------------------------ */
 :root {
@@ -35,7 +34,6 @@
   --gap: 24px;
   --container: 1200px;
 }
-
 
 /* 2. Base ----------------------------------------------------------------- */
 *,
@@ -80,7 +78,6 @@ a {
   outline-color: var(--color-yellow);
 }
 
-
 /* 3. Utilidades ----------------------------------------------------------- */
 /* Oculta el elemento visualmente pero lo deja disponible para lectores de pantalla */
 .visually-hidden {
@@ -119,7 +116,6 @@ a {
   padding-inline: var(--gap);
 }
 
-
 /* 4. Cabecera ------------------------------------------------------------- */
 .site-header {
   background: var(--color-ink);
@@ -157,7 +153,6 @@ a {
   color: var(--color-yellow);
 }
 
-
 /* 5. Estructura de la página --------------------------------------------- */
 .page {
   display: flex;
@@ -179,9 +174,14 @@ a {
 /* Columna ancha (3 partes) y columna estrecha (2 partes).
    El tercer valor es el ancho mínimo antes de saltar de línea.
    min-width: 0 evita que el contenido largo desborde la columna. */
-.col-main { flex: 3 1 540px; min-width: 0; }
-.col-side { flex: 2 1 340px; min-width: 0; }
-
+.col-main {
+  flex: 3 1 540px;
+  min-width: 0;
+}
+.col-side {
+  flex: 2 1 340px;
+  min-width: 0;
+}
 
 /* 6. Botones -------------------------------------------------------------- */
 .btn {
@@ -216,6 +216,25 @@ a {
   background: #33443a;
 }
 
+/* Botón secundario: sin bordes y con la misma fuente de tiza que los ejercicios */
+.btn--ghost {
+  gap: 6px;
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-chalk-muted);
+  font: 400 clamp(20px, 2.2vw, 26px)/1.2 var(--font-display);
+}
+
+.btn--ghost:hover {
+  color: var(--color-paper);
+}
+
+/* Flecha del botón de pizarras anteriores: un poco mayor que el texto */
+.btn__arrow {
+  font-size: 1.3em;
+  line-height: 1;
+}
 
 /* 7. Tarjetas ------------------------------------------------------------- */
 .card {
@@ -236,7 +255,6 @@ a {
   font: 400 26px/1.2 var(--font-display);
 }
 
-
 /* 8. Pizarra -------------------------------------------------------------- */
 .board {
   display: flex;
@@ -251,10 +269,20 @@ a {
 
 .board__meta {
   margin: 0;
+  flex: 1 1 auto;
   font-size: 14px;
   letter-spacing: 3px;
   text-transform: uppercase;
   color: var(--color-chalk-muted);
+}
+
+/* Cabecera de la pizarra: la fecha a la izquierda y el enlace a la derecha.
+   En pantallas estrechas el enlace baja a su propia línea. */
+.board__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px 16px;
 }
 
 .board__title {
@@ -300,6 +328,35 @@ a {
   margin-top: auto;
 }
 
+/* La variante de la cabecera no se empuja al final (margin-top: auto)
+   y se mantiene pegada a la derecha */
+.board__actions--top {
+  position: relative;
+  margin-top: 0;
+  margin-left: auto;
+}
+
+/* Desplegable de pizarras anteriores: se abre bajo el botón sin mover la pizarra */
+.board__past {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: max-content;
+  max-width: min(320px, 80vw);
+  padding: 12px;
+  background: var(--color-paper);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 35%);
+}
+
+.board__past__label {
+  font-size: 13px;
+  font-weight: 600;
+}
 
 /* 9. Ranking -------------------------------------------------------------- */
 .ranking {
@@ -358,7 +415,6 @@ a {
   font-weight: 500;
 }
 
-
 /* 10. Historial ----------------------------------------------------------- */
 .chips {
   display: flex;
@@ -378,7 +434,7 @@ a {
 }
 
 /* La persona seleccionada se marca con aria-pressed (sirve también para accesibilidad) */
-.chip[aria-pressed='true'] {
+.chip[aria-pressed="true"] {
   background: var(--color-ink);
   color: var(--color-paper);
   font-weight: 600;
@@ -433,7 +489,6 @@ a {
   color: #4b5a51;
 }
 
-
 /* 11. Formulario ---------------------------------------------------------- */
 .form {
   display: flex;
@@ -469,7 +524,7 @@ textarea.control {
   resize: none;
 }
 
-.control[aria-invalid='true'] {
+.control[aria-invalid="true"] {
   border-width: 2px;
   border-color: var(--color-error);
 }
@@ -489,7 +544,6 @@ textarea.control {
 .form__status.is-error {
   color: var(--color-error);
 }
-
 
 /* 12. Pie y panel de administración --------------------------------------- */
 .site-footer {
