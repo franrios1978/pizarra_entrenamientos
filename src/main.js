@@ -11,7 +11,9 @@
    5. Estado y consultas
    6. Pintado de cada zona de la página
    7. Eventos
-   8. Arranque
+   8. Panel de administración
+   9. Reloj y cronómetro
+   10. Arranque
    ========================================================================== */
 
 /* ==========================================================================
@@ -798,7 +800,233 @@ $("#admin-logout").addEventListener("click", () => {
 });
 
 /* ==========================================================================
-   9. ARRANQUE
+   9. RELOJ Y CRONÓMETRO
+   Reloj en tiempo real que se convierte en cronómetro a pantalla completa
+   para medir las sesiones de entrenamiento.
+   ========================================================================== */
+
+const clockEl = $("#reloj");
+const clockDisplay = $("#clock-display");
+const clockMode = $("#clock-mode");
+const clockExpand = $("#clock-expand");
+const clockStart = $("#clock-start");
+const clockReset = $("#clock-reset");
+
+let clockTimer = null;
+let stopwatchFrame = null;
+let stopwatchRunning = false;
+let stopwatchElapsed = 0; // ms acumulados antes de la pausa actual
+let stopwatchStartedAt = 0; // performance.now() al reanudar
+let stopwatchShown = "";
+let displayCells = [];
+let displayShape = "";
+
+const pad2 = (value) => String(value).padStart(2, "0");
+
+/** ¿Está abierto el modo cronómetro/maximizado? */
+function isStopwatch() {
+  return clockEl.classList.contains("clock--full");
+}
+
+/** Hora local "HH:MM:SS". */
+function formatClock(date = new Date()) {
+  return `${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`;
+}
+
+/** Milisegundos -> "MM:SS.cc" (o "H:MM:SS.cc" si pasa de una hora). */
+function formatStopwatch(ms) {
+  const totalCentis = Math.floor(ms / 10);
+  const centis = totalCentis % 100;
+  const totalSeconds = Math.floor(totalCentis / 100);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const body = `${pad2(minutes)}:${pad2(seconds)}.${pad2(centis)}`;
+  return hours > 0 ? `${hours}:${body}` : body;
+}
+
+/**
+ * Pinta el texto en celdas de ancho fijo. Así los dígitos cambian sin que el
+ * bloque se desplace horizontalmente. Solo reconstruye las celdas cuando
+ * cambia la plantilla (por ejemplo, al pasar de "HH:MM:SS" a "MM:SS.cc").
+ */
+function paintDisplay(text) {
+  const shape = text.replace(/\d/g, "d");
+  if (shape !== displayShape) {
+    displayShape = shape;
+    const fragment = document.createDocumentFragment();
+    displayCells = [...text].map((char) => {
+      const cell = document.createElement("span");
+      cell.className = /\d/.test(char)
+        ? "clock__cell"
+        : char === ":"
+          ? "clock__cell clock__cell--colon"
+          : "clock__cell clock__cell--dot";
+      cell.textContent = char;
+      fragment.append(cell);
+      return cell;
+    });
+    clockDisplay.replaceChildren(fragment);
+    return;
+  }
+
+  displayCells.forEach((cell, index) => {
+    const char = text[index];
+    if (cell.textContent !== char) cell.textContent = char;
+  });
+}
+
+function paintClock() {
+  const now = new Date();
+  paintDisplay(formatClock(now));
+  clockDisplay.dateTime = now.toISOString();
+}
+
+/** Tiempo transcurrido (incluye la parte en marcha si está corriendo). */
+function stopwatchMs() {
+  return stopwatchElapsed + (stopwatchRunning ? performance.now() - stopwatchStartedAt : 0);
+}
+
+function paintStopwatch() {
+  const text = formatStopwatch(stopwatchMs());
+  // Solo tocamos el DOM cuando cambia el texto mostrado.
+  if (text !== stopwatchShown) {
+    stopwatchShown = text;
+    paintDisplay(text);
+  }
+}
+
+function startClockTick() {
+  stopClockTick();
+  clockMode.textContent = "Hora local";
+  paintClock();
+  clockTimer = setInterval(paintClock, 1000);
+}
+
+function stopClockTick() {
+  if (clockTimer !== null) {
+    clearInterval(clockTimer);
+    clockTimer = null;
+  }
+}
+
+function stopStopwatchLoop() {
+  if (stopwatchFrame !== null) {
+    cancelAnimationFrame(stopwatchFrame);
+    stopwatchFrame = null;
+  }
+}
+
+function updateStartButton() {
+  clockStart.textContent = stopwatchRunning
+    ? "Pausar"
+    : stopwatchElapsed > 0
+      ? "Continuar"
+      : "Empezar";
+}
+
+function resetStopwatch() {
+  stopwatchRunning = false;
+  stopwatchElapsed = 0;
+  stopwatchShown = "";
+  stopStopwatchLoop();
+  paintStopwatch();
+  updateStartButton();
+}
+
+/** Empezar o pausar el cronómetro. */
+function toggleStopwatch() {
+  if (stopwatchRunning) {
+    // Pausa: guardamos lo transcurrido y paramos el bucle.
+    stopwatchElapsed = stopwatchMs();
+    stopwatchRunning = false;
+    stopStopwatchLoop();
+    paintStopwatch();
+  } else {
+    stopwatchRunning = true;
+    stopwatchStartedAt = performance.now();
+    const loop = () => {
+      paintStopwatch();
+      stopwatchFrame = requestAnimationFrame(loop);
+    };
+    stopwatchFrame = requestAnimationFrame(loop);
+  }
+  updateStartButton();
+}
+
+/** Entra en modo cronómetro y maximiza el reloj. */
+function maximizeClock() {
+  clockEl.classList.add("clock--full");
+  document.body.classList.add("clock-lock");
+  clockMode.textContent = "Cronómetro";
+  clockExpand.textContent = "Salir";
+  clockExpand.setAttribute("aria-pressed", "true");
+  clockStart.hidden = false;
+  clockReset.hidden = false;
+  clockDisplay.removeAttribute("datetime");
+
+  stopClockTick();
+  resetStopwatch();
+
+  // Pantalla completa real si el navegador lo permite; si no, queda el overlay.
+  try {
+    clockEl.requestFullscreen?.()?.catch(() => {});
+  } catch {
+    // El overlay CSS ya cubre la ventana.
+  }
+
+  clockStart.focus();
+}
+
+/** Vuelve al reloj normal. */
+function minimizeClock({ restoreFocus = true } = {}) {
+  if (!isStopwatch()) return;
+
+  stopwatchRunning = false;
+  stopwatchElapsed = 0;
+  stopStopwatchLoop();
+  clockEl.classList.remove("clock--full");
+  document.body.classList.remove("clock-lock");
+  clockMode.textContent = "Hora local";
+  clockExpand.textContent = "Maximizar";
+  clockExpand.setAttribute("aria-pressed", "false");
+  clockStart.hidden = true;
+  clockReset.hidden = true;
+
+  try {
+    if (document.fullscreenElement) document.exitFullscreen?.()?.catch(() => {});
+  } catch {
+    // Sin pantalla completa nativa.
+  }
+
+  startClockTick();
+  if (restoreFocus) clockExpand.focus();
+}
+
+clockExpand.addEventListener("click", () => {
+  if (isStopwatch()) minimizeClock();
+  else maximizeClock();
+});
+
+clockStart.addEventListener("click", toggleStopwatch);
+clockReset.addEventListener("click", resetStopwatch);
+
+// Si el navegador sale de pantalla completa (Escape), volvemos al reloj.
+document.addEventListener("fullscreenchange", () => {
+  if (!document.fullscreenElement && isStopwatch()) {
+    minimizeClock({ restoreFocus: false });
+  }
+});
+
+// Escape también cierra el overlay cuando la Fullscreen API no está disponible.
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && isStopwatch() && !document.fullscreenElement) {
+    minimizeClock();
+  }
+});
+
+/* ==========================================================================
+   10. ARRANQUE
    ========================================================================== */
 
 function init() {
@@ -810,6 +1038,7 @@ function init() {
   buildBoardOptions();
   updateResultHint();
   renderAll();
+  startClockTick();
 }
 
 init();

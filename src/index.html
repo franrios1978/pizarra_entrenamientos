@@ -9,11 +9,11 @@
       content="Resultados de crossfit y circuito funcional del grupo, con el próximo entrenamiento y el ranking."
     />
 
-    <!-- Tipografías: Permanent Marker (pizarra) e Inter (texto) -->
+    <!-- Tipografías: Permanent Marker (pizarra), Inter (texto) y Orbitron (reloj) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Permanent+Marker&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Orbitron:wght@500;700&family=Permanent+Marker&display=swap"
       rel="stylesheet"
     />
 
@@ -87,7 +87,7 @@
           </div>
         </section>
 
-        <section class="card col-side" aria-labelledby="ranking-title">
+        <section class="card card--ranking col-side" aria-labelledby="ranking-title">
           <h2 class="card__title" id="ranking-title">Ranking</h2>
           <ol class="ranking" id="ranking-list"></ol>
           <div class="ranking__switch">
@@ -97,29 +97,61 @@
         </section>
       </div>
 
-      <!-- ====== Fila 2: historial por persona + formulario ====== -->
+      <!-- ====== Fila 2: historial por persona + reloj + formulario ====== -->
       <div class="row row--start">
-        <section id="historial" class="card col-main" aria-labelledby="history-title">
-          <h2 class="card__title" id="history-title">Historial por persona</h2>
+        <div class="col-main stack">
+          <section id="historial" class="card" aria-labelledby="history-title">
+            <h2 class="card__title" id="history-title">Historial por persona</h2>
 
-          <!-- Los botones de cada persona los crea app.js -->
-          <div class="chips" id="history-chips" role="group" aria-label="Elegir persona"></div>
+            <!-- Los botones de cada persona los crea app.js -->
+            <div class="chips" id="history-chips" role="group" aria-label="Elegir persona"></div>
 
-          <!-- El contenedor es enfocable para poder desplazar la tabla con el teclado en pantallas pequeñas -->
-          <div class="table-wrap" tabindex="0" role="region" aria-labelledby="history-caption">
-            <table class="results">
-              <caption class="visually-hidden" id="history-caption"></caption>
-              <thead>
-                <tr>
-                  <th scope="col">Fecha</th>
-                  <th scope="col">Entrenamiento</th>
-                  <th scope="col">Resultado</th>
-                </tr>
-              </thead>
-              <tbody id="history-body"></tbody>
-            </table>
-          </div>
-        </section>
+            <!-- El contenedor es enfocable para poder desplazar la tabla con el teclado en pantallas pequeñas -->
+            <div class="table-wrap" tabindex="0" role="region" aria-labelledby="history-caption">
+              <table class="results">
+                <caption class="visually-hidden" id="history-caption"></caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Fecha</th>
+                    <th scope="col">Entrenamiento</th>
+                    <th scope="col">Resultado</th>
+                  </tr>
+                </thead>
+                <tbody id="history-body"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- Reloj en tiempo real; el botón lo convierte en cronómetro a pantalla completa -->
+          <section id="reloj" class="card clock" aria-labelledby="clock-title">
+            <div class="clock__head">
+              <h2 class="card__title clock__title" id="clock-title">Reloj</h2>
+              <span class="clock__mode" id="clock-mode" aria-live="polite">Hora local</span>
+            </div>
+
+            <!-- role="timer" no anuncia cada segundo; el cambio de modo sí se anuncia -->
+            <time class="clock__display" id="clock-display" role="timer" aria-live="off"
+              >--:--:--</time
+            >
+
+            <div class="clock__actions">
+              <button class="btn btn--dark clock__btn" id="clock-start" type="button" hidden>
+                Empezar
+              </button>
+              <button class="btn btn--dark clock__btn" id="clock-reset" type="button" hidden>
+                Reiniciar
+              </button>
+              <button
+                class="btn btn--yellow clock__btn"
+                id="clock-expand"
+                type="button"
+                aria-pressed="false"
+              >
+                Maximizar
+              </button>
+            </div>
+          </section>
+        </div>
 
         <section id="subir" class="card card--accent col-side" aria-labelledby="form-title">
           <h2 class="card__title" id="form-title">Subir resultado</h2>
