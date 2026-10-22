@@ -91,6 +91,7 @@ git add . && git commit -m "Resultados" && git push && pnpm exec gh-pages -d src
 | Síntoma                           | Causa                      | Solución                                        |
 | --------------------------------- | -------------------------- | ----------------------------------------------- |
 | No aparecen los resultados nuevos | `RESULTS_VERSION` no subió | Súbela a mano (+1) en `src/data.js` y publica   |
+| Un resultado sale en la fecha que no es | `SEED_RESULTS` sin `date` | Añade `date` (`AAAA-MM-DD`) al resultado        |
 | Siguen saliendo los antiguos      | Caché del navegador        | Recarga con Ctrl+Shift+R                        |
 | La web publicada no cambia        | Se publicó antes del push  | Repite `git push` y `pnpm exec gh-pages -d src` |
 | Tarda en actualizarse             | Despliegue de GitHub Pages | Espera 1-2 minutos                              |
@@ -112,6 +113,24 @@ Todo está en `src/data.js`:
   - en `exercises`, cada elemento puede ser un texto (`'Burpee 8 reps'`) o un
     objeto con vídeo: `{ text: 'Burpee 8 reps', video: 'https://...' }`
 - `ATHLETES`: personas del grupo (`id` único y `name`).
+- `SEED_RESULTS`: resultados publicados. Cada uno lleva `athleteId`, `workoutId`,
+  `date` (`AAAA-MM-DD`), `value` (número) y `notes`.
+
+### Renovar el WOD de la semana (importante)
+
+El id `"next"` se **reutiliza** cada semana. Para que los resultados no cambien de
+entrenamiento al renovar el WOD:
+
+1. Al cambiar el WOD, **archiva el anterior** con un id propio y su fecha:
+   `{ "id": "wod-2026-10-23", "date": "2026-10-23", ... }`.
+2. Deja `"next"` apuntando al WOD nuevo con su fecha nueva.
+3. Los resultados se localizan por **fecha**, no por id: un resultado guardado el
+   `2026-10-23` seguirá apareciendo en el historial del `2026-10-23` aunque su
+   `workoutId` diga `"next"` o el entrenamiento se archive con otro id.
+
+> Si un resultado se guarda contra `"next"` y la semana siguiente `"next"` es otro
+> WOD, ese resultado se mostraría en el WOD equivocado. Por eso el campo `date`
+> es obligatorio en los resultados.
 
 ## Seguridad
 
