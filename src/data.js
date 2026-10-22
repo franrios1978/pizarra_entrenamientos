@@ -33,11 +33,13 @@ const WORKOUTS = [
       },
       {
         "text": "-Power Cleans (barra o mancuernas) 8 reps",
-        "video": "https://www.youtube.com/watch?v=KwYJTpQ_x5A"
+        "video": "https://www.youtube.com/watch?v=KwYJTpQ_x5A",
+        "hint": "Video"
       },
       {
         "text": "-Kettlebell Swings 12 reps",
-        "video": "https://www.youtube.com/watch?v=mKDIuUbH94Q"
+        "video": "https://www.youtube.com/watch?v=mKDIuUbH94Q",
+        "hint": "Video"
       },
       {
         "text": "-Flexiones de pecho"

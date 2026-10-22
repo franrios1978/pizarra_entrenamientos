@@ -354,10 +354,15 @@ function renderNextWorkout(workoutId = NEXT_WORKOUT_ID) {
 
   exercises.replaceChildren(
     ...(workout.exercises ?? []).map((exercise) => {
-      // Compatible con texto suelto ('Burpee 8 reps') y con objeto ({ text, video })
+      // Compatible con texto suelto ('Burpee 8 reps') y con objeto ({ text, video, hint })
       const item = typeof exercise === "string" ? { text: exercise } : exercise;
       const content = item.video
-        ? el("a", { href: item.video, target: "_blank", rel: "noopener noreferrer" }, item.text)
+        ? el(
+            "a",
+            { href: item.video, target: "_blank", rel: "noopener noreferrer" },
+            item.text,
+            item.hint ? el("span", { class: "exercise__hint" }, item.hint) : "",
+          )
         : item.text;
       return el("li", {}, content);
     }),

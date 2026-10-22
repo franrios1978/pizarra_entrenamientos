@@ -112,6 +112,8 @@ Todo está en `src/data.js`:
   - `warmup`, `exercises` y `note` son opcionales; si faltan, se ocultan en la pizarra
   - en `exercises`, cada elemento puede ser un texto (`'Burpee 8 reps'`) o un
     objeto con vídeo: `{ text: 'Burpee 8 reps', video: 'https://...' }`
+  - dentro de un ejercicio con vídeo, `hint` es opcional y muestra una etiqueta
+    resaltada: `{ text: 'Burpee 8 reps', video: 'https://...', hint: 'Ver técnica' }`
 - `ATHLETES`: personas del grupo (`id` único y `name`).
 - `SEED_RESULTS`: resultados publicados. Cada uno lleva `athleteId`, `workoutId`,
   `date` (`AAAA-MM-DD`), `value` (número) y `notes`.
