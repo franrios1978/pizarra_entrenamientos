@@ -184,6 +184,14 @@ a {
   min-width: 0;
 }
 
+/* Columna que apila varias tarjetas con el mismo hueco que las filas */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  min-width: 0;
+}
+
 /* 6. Botones -------------------------------------------------------------- */
 .btn {
   display: inline-flex;
@@ -412,8 +420,26 @@ a {
   flex-direction: column;
   gap: 6px;
   margin-top: auto;
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+/* Fondo de Rocky al 50%, recortado sin deformar y manteniendo la cabeza arriba. */
+.card--ranking {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.card--ranking::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: url("../assets/images/Rocky_1.jpg") center top / cover no-repeat;
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 /* 10. Historial ----------------------------------------------------------- */
@@ -600,4 +626,125 @@ textarea.control {
   min-height: 1.4em;
   margin: 0;
   font-size: 14px;
+}
+
+/* 13. Reloj y cronómetro --------------------------------------------------- */
+/* Estilo de reloj de CrossFit: fondo negro y dígitos rojos con brillo. */
+.clock {
+  gap: 14px;
+  background: #000;
+  color: #ff2b2b;
+}
+
+.clock :focus-visible {
+  outline-color: var(--color-yellow);
+}
+
+.clock__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.clock__title {
+  margin: 0;
+  color: var(--color-paper);
+  font: 400 26px/1.2 var(--font-display);
+}
+
+.clock__mode {
+  font: 600 13px/1 var(--font-body);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #b32b2b;
+}
+
+.clock__display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  font-family: 'Orbitron', 'Courier New', monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: clamp(36px, 8vw, 88px);
+  line-height: 1;
+  color: #ff2b2b;
+  text-shadow:
+    0 0 10px rgb(255 43 43 / 60%),
+    0 0 28px rgb(255 43 43 / 30%);
+}
+
+/* Cada carácter ocupa una celda fija: el bloque no se mueve al cambiar de dígito.
+   La celda (0.8em) es mayor que la tinta del dígito más ancho (0.713em), así que
+   quedan juntos pero con un pequeño hueco entre ellos. */
+.clock__cell {
+  flex: 0 0 auto;
+  width: 0.8em;
+  text-align: center;
+}
+
+.clock__cell--colon {
+  width: 0.24em;
+}
+
+.clock__cell--dot {
+  width: 0.23em;
+}
+
+.clock__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.clock__btn {
+  min-width: 128px;
+}
+
+/* Modo maximizado: overlay a pantalla completa con el cronómetro enorme. */
+.clock--full {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  justify-content: center;
+  gap: clamp(16px, 4vh, 40px);
+  padding: clamp(20px, 5vw, 48px);
+  border-radius: 0;
+  background: #000;
+  overflow: auto;
+}
+
+.clock--full .clock__title {
+  font-size: clamp(20px, 3vw, 32px);
+}
+
+.clock--full .clock__mode {
+  font-size: clamp(12px, 1.6vw, 16px);
+}
+
+.clock--full .clock__display {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(30px, 12vw, 260px);
+  white-space: nowrap;
+}
+
+.clock--full .clock__actions {
+  justify-content: center;
+}
+
+.clock--full .clock__btn {
+  min-height: 56px;
+  padding-inline: 28px;
+  font-size: 17px;
+}
+
+/* Evita que la página se desplace mientras el cronómetro está maximizado */
+body.clock-lock {
+  overflow: hidden;
 }
