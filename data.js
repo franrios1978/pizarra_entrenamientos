@@ -12,7 +12,7 @@
 const NEXT_WORKOUT_ID = "next";
 
 /** Versión de los resultados publicados. Se sube sola (+1) al generar el archivo. */
-const RESULTS_VERSION = 3;
+const RESULTS_VERSION = 4;
 
 /** Contraseña del panel de administración. */
 const ADMIN_PASSWORD = "Entrenoatope.1978";
@@ -124,12 +124,18 @@ const ATHLETES = [
   }
 ];
 
-/** Resultados publicados. "value" es SIEMPRE un número: rondas, reps, segundos o kg. */
+/**
+ * Resultados publicados. "value" es SIEMPRE un número: rondas, reps, segundos o kg.
+ * "date" es la fecha (AAAA-MM-DD) del entrenamiento al que pertenece el resultado.
+ * Es importante: cuando el entrenamiento "next" se renueva, su id vuelve a usarse
+ * para otro WOD, así que el resultado se ancla a la fecha, no solo al id.
+ */
 const SEED_RESULTS = [
   {
     "id": "r-mvjmmnu9zpx5p",
     "athleteId": "tu",
     "workoutId": "wod-2026-10-16",
+    "date": "2026-10-16",
     "value": 870,
     "notes": "Sentadillas con disco de 15 kg"
   },
@@ -137,6 +143,7 @@ const SEED_RESULTS = [
     "id": "r-mvjmmnu96098e",
     "athleteId": "lucia",
     "workoutId": "wod-2026-10-16",
+    "date": "2026-10-16",
     "value": 870,
     "notes": "Sentadilla con disco de 5 kg (10 sentadillas)\nÚltima ronda 1 vuelta de carreta"
   },
@@ -144,6 +151,7 @@ const SEED_RESULTS = [
     "id": "r-mvjmmnu9cy9dm",
     "athleteId": "fernando",
     "workoutId": "wod-2026-10-16",
+    "date": "2026-10-16",
     "value": 925,
     "notes": "Sentadilla con disco de 15 kg"
   },
@@ -151,6 +159,7 @@ const SEED_RESULTS = [
     "id": "r-mvjmmnu9np7w5",
     "athleteId": "lucia",
     "workoutId": "wod-2026-10-19",
+    "date": "2026-10-19",
     "value": 4,
     "notes": ""
   },
@@ -158,6 +167,7 @@ const SEED_RESULTS = [
     "id": "r-mvjmmnu93raqq",
     "athleteId": "fernando",
     "workoutId": "wod-2026-10-19",
+    "date": "2026-10-19",
     "value": 4,
     "notes": ""
   },
@@ -165,20 +175,23 @@ const SEED_RESULTS = [
     "id": "r-mvjmmnu9sxcjg",
     "athleteId": "tu",
     "workoutId": "wod-2026-10-19",
+    "date": "2026-10-19",
     "value": 4,
     "notes": "Push Press 10 reps\nSaltos al cajón 12 reps (de la quinta ronda)"
   },
   {
     "id": "r-mvjmmnu9nk043",
     "athleteId": "tu",
-    "workoutId": "next",
+    "workoutId": "wod-2026-10-22",
+    "date": "2026-10-22",
     "value": 4,
     "notes": "4 rondas + 3 ejercicios"
   },
   {
     "id": "r-mvjmmnu9mbllx",
     "athleteId": "lucia",
-    "workoutId": "next",
+    "workoutId": "wod-2026-10-22",
+    "date": "2026-10-22",
     "value": 4,
     "notes": "4 rondas + 3 ejercicios"
   }

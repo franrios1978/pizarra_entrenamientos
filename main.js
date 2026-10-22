@@ -118,7 +118,7 @@ const store = {
         // Ignora resultados de atletas o entrenamientos que ya no existen en data.js
         // (por ejemplo datos antiguos guardados antes de editar ATHLETES/WORKOUTS).
         return saved.results.filter(
-          (result) => athleteById.has(result.athleteId) && workoutById.has(result.workoutId),
+          (result) => athleteById.has(result.athleteId) && resolveWorkout(result),
         );
       }
     } catch {
@@ -195,6 +195,42 @@ function makeId() {
 
 const athleteById = new Map(ATHLETES.map((athlete) => [athlete.id, athlete]));
 const workoutById = new Map(WORKOUTS.map((workout) => [workout.id, workout]));
+// Entrenamientos indexados por fecha. Si dos comparten fecha, manda el que NO es
+// "next" (el archivado), porque su id es estable y "next" se reutiliza cada semana.
+const workoutByDate = new Map();
+for (const workout of [...WORKOUTS].sort(
+  (a, b) => (a.id === NEXT_WORKOUT_ID ? 1 : 0) - (b.id === NEXT_WORKOUT_ID ? 1 : 0),
+)) {
+  if (!workoutByDate.has(workout.date)) workoutByDate.set(workout.date, workout);
+}
+
+/**
+ * Entrenamiento al que pertenece un resultado.
+ *
+ * Se busca por FECHA y no solo por id porque el id "next" se reutiliza: el WOD de
+ * esta semana y el de la semana pasada comparten id "next". La fecha es lo único
+ * estable, así que un resultado guardado el 2026-10-22 sigue apuntando al
+ * entrenamiento de esa fecha aunque después se archive con otro id.
+ *
+ * Fallback: si el resultado tiene fecha pero no hay ningún entrenamiento con esa
+ * fecha, se busca por id. Ese atajo NO se aplica al id "next" a propósito: si no,
+ * un resultado archivado aparecería colgado del WOD de la semana siguiente.
+ */
+function resolveWorkout(result) {
+  if (result.date) {
+    const byDate = workoutByDate.get(result.date);
+    if (byDate) return byDate;
+    if (result.workoutId === NEXT_WORKOUT_ID) return null;
+  }
+  // Resultados antiguos sin fecha: se cae al id (comportamiento anterior).
+  return workoutById.get(result.workoutId) ?? null;
+}
+
+/** ¿Este resultado corresponde a este entrenamiento concreto (misma sesión)? */
+function resultBelongsTo(result, workout) {
+  const resolved = resolveWorkout(result);
+  return resolved !== null && resolved.id === workout.id;
+}
 
 const state = {
   results: store.load(),
@@ -209,7 +245,7 @@ const workoutsNewestFirst = [...WORKOUTS].sort((a, b) => b.date.localeCompare(a.
 /** Entrenamientos que ya tienen al menos un resultado (para el ranking). */
 function workoutsWithResults() {
   return workoutsNewestFirst.filter((workout) =>
-    state.results.some((result) => result.workoutId === workout.id),
+    state.results.some((result) => resultBelongsTo(result, workout)),
   );
 }
 
@@ -218,10 +254,11 @@ function workoutsWithResults() {
  * Si dos personas empatan comparten posición (1, 1, 3...).
  */
 function buildRanking(workoutId) {
-  const { higherIsBetter } = SCORING[workoutById.get(workoutId).scoring];
+  const workout = workoutById.get(workoutId);
+  const { higherIsBetter } = SCORING[workout.scoring];
 
   const sorted = state.results
-    .filter((result) => result.workoutId === workoutId)
+    .filter((result) => resultBelongsTo(result, workout))
     .sort((a, b) => (higherIsBetter ? b.value - a.value : a.value - b.value));
 
   let rank = 0;
@@ -234,11 +271,13 @@ function buildRanking(workoutId) {
 /**
  * Guarda un resultado. Cada persona tiene un único resultado por entrenamiento:
  * si ya existía, se actualiza en lugar de duplicarlo.
+ * El resultado guarda la FECHA del entrenamiento, que es lo único estable
+ * (el id "next" se reutiliza de una semana a otra).
  * Devuelve "created" o "updated".
  */
-function saveResult({ athleteId, workoutId, value, notes }) {
+function saveResult({ athleteId, workout, value, notes }) {
   const existing = state.results.find(
-    (result) => result.athleteId === athleteId && result.workoutId === workoutId,
+    (result) => result.athleteId === athleteId && resultBelongsTo(result, workout),
   );
 
   if (existing) {
@@ -246,7 +285,14 @@ function saveResult({ athleteId, workoutId, value, notes }) {
     return "updated";
   }
 
-  state.results.push({ id: makeId(), athleteId, workoutId, value, notes });
+  state.results.push({
+    id: makeId(),
+    athleteId,
+    workoutId: workout.id,
+    date: workout.date,
+    value,
+    notes,
+  });
   return "created";
 }
 
@@ -418,7 +464,9 @@ function renderHistory() {
 
   const rows = state.results
     .filter((result) => result.athleteId === state.historyAthleteId)
-    .map((result) => ({ result, workout: workoutById.get(result.workoutId) }))
+    .map((result) => ({ result, workout: resolveWorkout(result) }))
+    // Un resultado sin entrenamiento válido (entreno borrado de data.js) no se pinta.
+    .filter(({ workout }) => Boolean(workout))
     .sort((a, b) => b.workout.date.localeCompare(a.workout.date))
     .map(({ result, workout }) =>
       el(
@@ -584,7 +632,7 @@ form.addEventListener("submit", (event) => {
   // 2) Guardar en memoria y en el almacenamiento
   const outcome = saveResult({
     athleteId,
-    workoutId: workout.id,
+    workout,
     value,
     notes: String(data.get("notes")).trim(),
   });
@@ -681,13 +729,19 @@ const ATHLETES = ${JSON.stringify(ATHLETES, null, 2)};
 
 /** Resultados publicados. "value" es SIEMPRE un número: rondas, reps, segundos o kg. */
 const SEED_RESULTS = ${JSON.stringify(
-    state.results.map(({ athleteId, workoutId, value, notes }) => ({
-      id: makeId(),
-      athleteId,
-      workoutId,
-      value,
-      notes,
-    })),
+    state.results.map(({ athleteId, workoutId, date, value, notes }) => {
+      // El id se reasigna al entrenamiento que corresponde a la fecha del resultado:
+      // así, un resultado guardado contra "next" se publica contra el id ya archivado.
+      const resolved = resolveWorkout({ workoutId, date });
+      return {
+        id: makeId(),
+        athleteId,
+        workoutId: resolved?.id ?? workoutId,
+        date: resolved?.date ?? date ?? null,
+        value,
+        notes,
+      };
+    }),
     null,
     2,
   )};
