@@ -25,6 +25,7 @@
   --color-line: #d6d3c7;        /* bordes y separadores suaves */
   --color-wood: #8a6240;        /* marco de la pizarra */
   --color-error: #7f1d1d;
+  --color-puntuac_pizarra: #1fff32; 
 
   --font-display: 'Permanent Marker', cursive;
   --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -317,7 +318,7 @@ a {
   margin: 0;
   font-size: 16px;
   line-height: 1.5;
-  color: var(--color-chalk-muted);
+  color: var(--color-puntuac_pizarra);
 }
 
 /* margin-top: auto empuja el botón al final cuando la pizarra se estira */
