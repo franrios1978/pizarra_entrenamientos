@@ -315,11 +315,27 @@ a {
 /* Ejercicios con vídeo: enlace con el mismo color que el resto de la lista */
 .board__exercises a {
   color: inherit;
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .board__exercises a:hover {
   color: #3d5cfc;
+}
+
+/* Aviso del enlace ("Pincha para video"): etiqueta tipo píldora */
+.board__exercises .exercise__hint {
+  display: inline-block;
+  margin-left: 1em;
+  padding: 0.12em 0.55em;
+  border: 1px solid rgb(250 204 21 / 45%);
+  border-radius: 999px;
+  background: rgb(250 204 21 / 14%);
+  color: var(--color-yellow);
+  font: 600 0.5em/1.2 var(--font-body);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
 .board__note {
