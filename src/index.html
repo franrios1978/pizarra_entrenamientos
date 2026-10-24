@@ -43,6 +43,9 @@
 
     <link rel="stylesheet" href="css/global.css" />
 
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js" defer></script>
     <!-- "defer": se ejecuta cuando el HTML ya está cargado. Es un script clásico
        (no módulo) para que la página también funcione abriendo el archivo con doble clic.
        data.js (los datos editables) se carga antes que main.js (la lógica). -->
@@ -61,6 +64,9 @@
           <a href="#historial">Historial</a>
           <a href="#reloj">Reloj</a>
           <a href="#subir">Subir resultado</a>
+          <button id="auth-btn" class="btn btn--ghost btn--small" type="button">Iniciar sesión</button>
+          <span id="auth-user" class="auth-user" hidden></span>
+          <button id="auth-logout" class="btn btn--ghost btn--small" type="button" hidden>Cerrar sesión</button>
         </nav>
       </div>
     </header>
@@ -273,6 +279,28 @@
           <button class="btn btn--dark" id="admin-logout" type="button">Salir</button>
         </div>
         <p class="admin__msg" id="admin-status" role="status"></p>
+      </div>
+    </dialog>
+
+    <!-- Modal de inicio de sesión -->
+    <dialog id="login-dialog" class="admin">
+      <div class="admin__box">
+        <h2 class="admin__title">Iniciar sesión</h2>
+        <form id="login-form" novalidate>
+          <div class="field">
+            <label for="login-email">Email</label>
+            <input class="control" id="login-email" type="email" autocomplete="email" required />
+          </div>
+          <div class="field">
+            <label for="login-password">Contraseña</label>
+            <input class="control" id="login-password" type="password" autocomplete="current-password" required />
+          </div>
+          <div class="admin__actions">
+            <button class="btn btn--dark" type="submit">Entrar</button>
+            <button class="btn btn--ghost" type="button" id="login-cancel">Cancelar</button>
+          </div>
+        </form>
+        <p class="admin__msg" id="login-msg" role="status"></p>
       </div>
     </dialog>
 

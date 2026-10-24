@@ -142,8 +142,18 @@ a {
 .site-nav {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 24px;
-  font-size: 15px;
+  align-items: center;
+  gap: clamp(0.75rem, 3vw, 1.5rem);
+}
+
+.auth-user {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.btn--small {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.85rem;
 }
 
 .site-nav a {

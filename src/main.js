@@ -13,7 +13,8 @@
    7. Eventos
    8. Panel de administración
    9. Reloj y cronómetro
-   10. Arranque
+   10. Autenticación / Supabase
+   11. Arranque
    ========================================================================== */
 
 /* ==========================================================================
@@ -114,9 +115,9 @@ const store = {
   /** Devuelve los resultados guardados o los iniciales (SEED_RESULTS) si no hay nada válido. */
   load() {
     try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
       // Solo valen los datos guardados con la MISMA versión publicada en data.js.
-      if (saved && saved.version === RESULTS_VERSION && Array.isArray(saved.results)) {
+      if (saved && saved.version === RESULTS_VERSION_VAL && Array.isArray(saved.results)) {
         // Ignora resultados de atletas o entrenamientos que ya no existen en data.js
         // (por ejemplo datos antiguos guardados antes de editar ATHLETES/WORKOUTS).
         return saved.results.filter(
@@ -126,13 +127,17 @@ const store = {
     } catch {
       // Sin acceso a localStorage (modo privado) o JSON dañado: empezamos de cero.
     }
-    return structuredClone(SEED_RESULTS);
+    try {
+      return structuredClone(SEED_RESULTS_LIST);
+    } catch {
+      return [];
+    }
   },
 
   /** Guarda la lista completa con la versión actual. Devuelve false si el navegador no lo permite. */
   save(results) {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: RESULTS_VERSION, results }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: RESULTS_VERSION_VAL, results }));
       return true;
     } catch {
       return false;
@@ -195,16 +200,26 @@ function makeId() {
    "state" es la única fuente de verdad: los render*() leen de aquí y pintan.
    ========================================================================== */
 
-const athleteById = new Map(ATHLETES.map((athlete) => [athlete.id, athlete]));
-const workoutById = new Map(WORKOUTS.map((workout) => [workout.id, workout]));
+let ATHLETES_LIST = Array.isArray(ATHLETES) ? ATHLETES : [];
+let WORKOUTS_LIST = Array.isArray(WORKOUTS) ? WORKOUTS : [];
+let SEED_RESULTS_LIST = Array.isArray(SEED_RESULTS) ? SEED_RESULTS : [];
+let RESULTS_VERSION_VAL = typeof RESULTS_VERSION === "number" ? RESULTS_VERSION : 0;
+
+const athleteById = new Map(ATHLETES_LIST.map((athlete) => [athlete.id, athlete]));
+let workoutById = new Map(WORKOUTS_LIST.map((workout) => [workout.id, workout]));
 // Entrenamientos indexados por fecha. Si dos comparten fecha, manda el que NO es
 // "next" (el archivado), porque su id es estable y "next" se reutiliza cada semana.
-const workoutByDate = new Map();
-for (const workout of [...WORKOUTS].sort(
-  (a, b) => (a.id === NEXT_WORKOUT_ID ? 1 : 0) - (b.id === NEXT_WORKOUT_ID ? 1 : 0),
-)) {
-  if (!workoutByDate.has(workout.date)) workoutByDate.set(workout.date, workout);
+let workoutByDate = new Map();
+function rebuildWorkoutMaps() {
+  workoutById = new Map(WORKOUTS_LIST.map((workout) => [workout.id, workout]));
+  workoutByDate = new Map();
+  for (const workout of [...WORKOUTS_LIST].sort(
+    (a, b) => (a.id === NEXT_WORKOUT_ID ? 1 : 0) - (b.id === NEXT_WORKOUT_ID ? 1 : 0),
+  )) {
+    if (!workoutByDate.has(workout.date)) workoutByDate.set(workout.date, workout);
+  }
 }
+rebuildWorkoutMaps();
 
 /**
  * Entrenamiento al que pertenece un resultado.
@@ -236,13 +251,20 @@ function resultBelongsTo(result, workout) {
 
 const state = {
   results: store.load(),
-  historyAthleteId: ATHLETES[0].id,
+  historyAthleteId: ATHLETES_LIST[0]?.id,
   rankingWorkoutId: null, // se calcula en init()
   boardWorkoutId: NEXT_WORKOUT_ID, // entrenamiento que se está viendo en la pizarra
+  session: null,
+  profile: null,
+  isAdmin: false,
+  authReady: false,
 };
 
 /** Entrenamientos del más reciente al más antiguo. */
-const workoutsNewestFirst = [...WORKOUTS].sort((a, b) => b.date.localeCompare(a.date));
+let workoutsNewestFirst = [...WORKOUTS_LIST].sort((a, b) => b.date.localeCompare(a.date));
+function rebuildWorkoutOrder() {
+  workoutsNewestFirst = [...WORKOUTS_LIST].sort((a, b) => b.date.localeCompare(a.date));
+}
 
 /** Entrenamientos que ya tienen al menos un resultado (para el ranking). */
 function workoutsWithResults() {
@@ -452,8 +474,9 @@ function renderRanking() {
 
 /** Botones con los nombres de las personas. Se crean una sola vez. */
 function buildHistoryChips() {
+  if (!historyChips) return;
   historyChips.replaceChildren(
-    ...ATHLETES.map((athlete) =>
+    ...ATHLETES_LIST.map((athlete) =>
       el("button", { type: "button", class: "chip", "data-athlete": athlete.id }, athlete.name),
     ),
   );
@@ -501,11 +524,11 @@ function renderHistory() {
 /** Rellena los desplegables del formulario (una sola vez). */
 function buildFormOptions() {
   athleteSelect.replaceChildren(
-    ...ATHLETES.map((athlete) => el("option", { value: athlete.id }, athlete.name)),
+    ...ATHLETES_LIST.map((athlete) => el("option", { value: athlete.id }, athlete.name)),
   );
 
   workoutSelect.replaceChildren(...workoutOptions());
-  workoutSelect.value = NEXT_WORKOUT_ID;
+  if (workoutById.has(NEXT_WORKOUT_ID)) workoutSelect.value = NEXT_WORKOUT_ID;
 }
 
 /** Rellena el desplegable de pizarras anteriores (una sola vez). */
@@ -617,13 +640,36 @@ $('[data-action="focus-form"]').addEventListener("click", () => {
 });
 
 /** Guardar un resultado. */
-form.addEventListener("submit", (event) => {
+form.addEventListener("submit", async (event) => {
   event.preventDefault(); // evitamos que el navegador recargue la página
 
+  const useSupabase = !!(typeof SUPABASE_CONFIG !== "undefined" && SUPABASE_CONFIG.USE_SUPABASE && window.supabase && window.supabaseClient);
+  if (useSupabase && !state.session) {
+    showStatus("Inicia sesión para apuntar tu resultado.", true);
+    if (typeof showLoginDialog === "function") showLoginDialog();
+    return;
+  }
+
   const data = new FormData(form);
-  const athleteId = data.get("athlete");
+  let athleteId = data.get("athlete");
   const workout = workoutById.get(data.get("workout"));
+  if (!workout) {
+    showStatus("Entrenamiento no válido.", true);
+    return;
+  }
   const scoring = SCORING[workout.scoring];
+
+  if (useSupabase && state.session && state.profile) {
+    if (state.isAdmin) {
+      // admin puede elegir cualquiera
+    } else if (state.profile.athlete_id) {
+      athleteId = state.profile.athlete_id;
+      if (athleteSelect) {
+        athleteSelect.value = athleteId;
+        athleteSelect.disabled = true;
+      }
+    }
+  }
 
   // 1) Validar el resultado: en los entrenos de tiempo se lee del campo Tiempo
   const isTime = scoring === SCORING.time;
@@ -637,13 +683,60 @@ form.addEventListener("submit", (event) => {
   }
 
   // 2) Guardar en memoria y en el almacenamiento
-  const outcome = saveResult({
+  let outcome = saveResult({
     athleteId,
     workout,
     value,
     notes: String(data.get("notes")).trim(),
   });
-  const persisted = store.save(state.results);
+  let persisted = store.save(state.results);
+
+  if (useSupabase && state.session) {
+    try {
+      const notes = String(data.get("notes")).trim();
+      // Intentar upsert por atleta+entrenamiento+fecha
+      const existingRemote = state.results.find(
+        (r) => r.athleteId === athleteId && resultBelongsTo(r, workout),
+      );
+      if (existingRemote && existingRemote.id && !existingRemote.id.toString().startsWith("r-seed-")) {
+        const { error } = await window.supabaseClient
+          .from("results")
+          .update({ value, notes, workout_id: workout.id, date: workout.date })
+          .eq("id", existingRemote.id);
+        if (error) throw error;
+      } else {
+        const { data: ins, error } = await window.supabaseClient
+          .from("results")
+          .insert({
+            athlete_id: athleteId,
+            workout_id: workout.id,
+            date: workout.date,
+            value,
+            notes,
+            created_by: state.session.user.id,
+          })
+          .select()
+          .single();
+        if (error) throw error;
+        if (ins && ins.id) {
+          // actualizar id local si era temporal
+          const local = state.results.find(
+            (r) => r.athleteId === athleteId && resultBelongsTo(r, workout) && (r.id.startsWith("r-") || r.id.startsWith("tmp")),
+          );
+          if (local) local.id = ins.id;
+        }
+      }
+      // Recargar desde Supabase para sincronizar
+      try {
+        await loadResultsFromSupabase();
+      } catch {
+        // ignore
+      }
+      store.save(state.results);
+    } catch (e) {
+      showStatus("Guardado en local. No se ha podido sincronizar con Supabase.", true);
+    }
+  }
 
   // 3) Mostrar lo que se acaba de guardar: su historial y el ranking de ese entrenamiento
   state.historyAthleteId = athleteId;
@@ -653,16 +746,20 @@ form.addEventListener("submit", (event) => {
   // 4) Limpiar los campos de texto y confirmar al usuario
   resultInput.value = "";
   timeInput.value = "";
-  form.elements.notes.value = "";
+  if (form.elements.notes) form.elements.notes.value = "";
 
   const verb = outcome === "created" ? "guardado" : "actualizado";
-  const name = athleteById.get(athleteId).name;
-  showStatus(
-    persisted
-      ? `${name}: resultado ${verb} (${scoring.format(value)}).`
-      : `${name}: resultado ${verb}, pero no se ha podido guardar en este navegador.`,
-    !persisted,
-  );
+  const name = athleteById.get(athleteId)?.name || athleteId;
+  if (useSupabase && state.session) {
+    showStatus(`${name}: resultado ${verb} (${scoring.format(value)}) sincronizado con Supabase.`);
+  } else {
+    showStatus(
+      persisted
+        ? `${name}: resultado ${verb} (${scoring.format(value)}).`
+        : `${name}: resultado ${verb}, pero no se ha podido guardar en este navegador.`,
+      !persisted,
+    );
+  }
 });
 
 /* ==========================================================================
@@ -1031,10 +1128,261 @@ document.addEventListener("keydown", (event) => {
 });
 
 /* ==========================================================================
-   10. ARRANQUE
+   10. AUTENTICACIÓN / SUPABASE
    ========================================================================== */
 
-function init() {
+let supabaseClient = null;
+
+function initSupabase() {
+  try {
+    if (typeof SUPABASE_CONFIG === "undefined") return;
+    if (!SUPABASE_CONFIG.USE_SUPABASE) return;
+    if (!window.supabase || !window.supabase.createClient) return;
+    if (supabaseClient) {
+      window.supabaseClient = supabaseClient;
+      return;
+    }
+    supabaseClient = window.supabase.createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.KEY);
+    window.supabaseClient = supabaseClient;
+  } catch (e) {
+    // ignore
+  }
+}
+
+const authBtn = document.getElementById("auth-btn");
+const authUserEl = document.getElementById("auth-user");
+const authLogoutBtn = document.getElementById("auth-logout");
+const loginDialog = document.getElementById("login-dialog");
+const loginForm = document.getElementById("login-form");
+const loginEmail = document.getElementById("login-email");
+const loginPassword = document.getElementById("login-password");
+const loginMsg = document.getElementById("login-msg");
+const loginCancel = document.getElementById("login-cancel");
+
+function updateAuthUI() {
+  const useSupabase = !!(typeof SUPABASE_CONFIG !== "undefined" && SUPABASE_CONFIG.USE_SUPABASE);
+  if (authBtn) authBtn.hidden = !useSupabase;
+  if (authLogoutBtn) authLogoutBtn.hidden = !useSupabase || !state.session;
+  if (authUserEl) {
+    if (useSupabase && state.session) {
+      const name = state.profile?.athlete_id
+        ? (ATHLETES_LIST.find((a) => a.id === state.profile.athlete_id)?.name || state.session.user.email)
+        : state.session.user.email;
+      const role = state.isAdmin ? "admin" : "miembro";
+      authUserEl.textContent = `${name} (${role})`;
+      authUserEl.hidden = false;
+    } else {
+      authUserEl.hidden = true;
+    }
+  }
+  // Forzar atleta para miembros
+  if (useSupabase && state.session && state.profile && !state.isAdmin && athleteSelect) {
+    if (state.profile.athlete_id) {
+      athleteSelect.value = state.profile.athlete_id;
+      athleteSelect.disabled = true;
+    }
+  } else if (athleteSelect && !useSupabase) {
+    athleteSelect.disabled = false;
+  } else if (useSupabase && state.session && state.isAdmin && athleteSelect) {
+    athleteSelect.disabled = false;
+  }
+}
+
+function showLoginDialog() {
+  if (!loginDialog) return;
+  if (loginMsg) loginMsg.textContent = "";
+  if (loginEmail) loginEmail.value = "";
+  if (loginPassword) loginPassword.value = "";
+  try {
+    loginDialog.showModal();
+    loginEmail?.focus();
+  } catch {
+    loginDialog.setAttribute("open", "");
+  }
+}
+
+function closeLoginDialog() {
+  if (!loginDialog) return;
+  try {
+    loginDialog.close();
+  } catch {
+    loginDialog.removeAttribute("open");
+  }
+}
+
+async function loadUserProfile() {
+  if (!supabaseClient || !state.session) {
+    state.profile = null;
+    state.isAdmin = false;
+    updateAuthUI();
+    return;
+  }
+  try {
+    const { data: profile } = await supabaseClient
+      .from("profiles")
+      .select("*")
+      .eq("id", state.session.user.id)
+      .maybeSingle();
+    state.profile = profile || null;
+    state.isAdmin = !!(profile && profile.role === "admin");
+  } catch (e) {
+    state.profile = null;
+    state.isAdmin = false;
+  }
+  updateAuthUI();
+  if (state.session && state.profile && !state.isAdmin && athleteSelect && state.profile.athlete_id) {
+    athleteSelect.value = state.profile.athlete_id;
+    athleteSelect.disabled = true;
+  }
+}
+
+async function initAuth() {
+  initSupabase();
+  if (!supabaseClient) {
+    state.authReady = true;
+    updateAuthUI();
+    return;
+  }
+  try {
+    const { data } = await supabaseClient.auth.getSession();
+    state.session = data?.session || null;
+  } catch (e) {
+    state.session = null;
+  }
+  await loadUserProfile();
+  state.authReady = true;
+  updateAuthUI();
+  try {
+    supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+      state.session = session;
+      await loadUserProfile();
+      await loadResultsFromSupabase();
+      renderAll();
+      updateAuthUI();
+    });
+  } catch (e) {
+    // ignore
+  }
+}
+
+async function loadResultsFromSupabase() {
+  if (!supabaseClient) return;
+  try {
+    const [athRes, wRes, rRes] = await Promise.all([
+      supabaseClient.from("athletes").select("*"),
+      supabaseClient.from("workouts").select("*"),
+      supabaseClient.from("results").select("*"),
+    ]);
+    if (athRes.data && Array.isArray(athRes.data) && athRes.data.length) {
+      ATHLETES_LIST = athRes.data;
+      // rebuild maps
+      const athleteByIdNew = new Map(ATHLETES_LIST.map((a) => [a.id, a]));
+      athleteById.clear();
+      for (const [k, v] of athleteByIdNew) athleteById.set(k, v);
+      if (!ATHLETES_LIST.find((a) => a.id === state.historyAthleteId) && ATHLETES_LIST[0]) {
+        state.historyAthleteId = ATHLETES_LIST[0].id;
+      }
+      if (athleteSelect) {
+        athleteSelect.replaceChildren(
+          ...ATHLETES_LIST.map((athlete) => el("option", { value: athlete.id }, athlete.name)),
+        );
+      }
+      buildHistoryChips();
+    }
+    if (wRes.data && Array.isArray(wRes.data) && wRes.data.length) {
+      WORKOUTS_LIST = wRes.data;
+      rebuildWorkoutMaps();
+      rebuildWorkoutOrder();
+      if (workoutSelect) {
+        workoutSelect.replaceChildren(...workoutOptions());
+        if (workoutById.has(state.boardWorkoutId)) workoutSelect.value = state.boardWorkoutId;
+        else if (NEXT_WORKOUT_ID && workoutById.has(NEXT_WORKOUT_ID)) {
+          state.boardWorkoutId = NEXT_WORKOUT_ID;
+          workoutSelect.value = NEXT_WORKOUT_ID;
+        }
+      }
+      if (boardWorkoutSelect) {
+        boardWorkoutSelect.replaceChildren(...workoutOptions());
+        boardWorkoutSelect.value = state.boardWorkoutId;
+      }
+      renderNextWorkout(state.boardWorkoutId);
+      updateResultHint();
+    }
+    if (rRes.data && Array.isArray(rRes.data)) {
+      state.results = rRes.data.map((r) => ({
+        id: r.id,
+        athleteId: r.athlete_id,
+        workoutId: r.workout_id,
+        date: r.date,
+        value: r.value,
+        notes: r.notes || "",
+      }));
+      store.save(state.results);
+    }
+  } catch (e) {
+    // fallback silencioso
+  }
+}
+
+if (authBtn) {
+  authBtn.addEventListener("click", () => {
+    if (typeof SUPABASE_CONFIG !== "undefined" && SUPABASE_CONFIG.USE_SUPABASE) {
+      showLoginDialog();
+    }
+  });
+}
+if (authLogoutBtn) {
+  authLogoutBtn.addEventListener("click", async () => {
+    try {
+      if (supabaseClient) await supabaseClient.auth.signOut();
+    } catch (e) {
+      // ignore
+    }
+    state.session = null;
+    state.profile = null;
+    state.isAdmin = false;
+    updateAuthUI();
+    if (athleteSelect) athleteSelect.disabled = false;
+  });
+}
+if (loginCancel) {
+  loginCancel.addEventListener("click", () => closeLoginDialog());
+}
+if (loginForm) {
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!supabaseClient) {
+      if (loginMsg) loginMsg.textContent = "Supabase no inicializado.";
+      return;
+    }
+    const email = loginEmail?.value || "";
+    const password = loginPassword?.value || "";
+    if (!email || !password) {
+      if (loginMsg) loginMsg.textContent = "Introduce email y contraseña.";
+      return;
+    }
+    if (loginMsg) loginMsg.textContent = "Entrando...";
+    try {
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      if (loginMsg) loginMsg.textContent = "Sesión iniciada.";
+      closeLoginDialog();
+      await initAuth();
+      await loadResultsFromSupabase();
+      renderAll();
+      updateAuthUI();
+    } catch (err) {
+      if (loginMsg) loginMsg.textContent = "Error al iniciar sesión.";
+    }
+  });
+}
+
+/* ==========================================================================
+   11. ARRANQUE
+   ========================================================================== */
+
+async function init() {
+  initSupabase();
   state.rankingWorkoutId = workoutsWithResults()[0]?.id ?? null;
 
   renderNextWorkout();
@@ -1044,6 +1392,18 @@ function init() {
   updateResultHint();
   renderAll();
   startClockTick();
+  updateAuthUI();
+
+  await initAuth();
+  if (typeof SUPABASE_CONFIG !== "undefined" && SUPABASE_CONFIG.USE_SUPABASE && supabaseClient) {
+    try {
+      await loadResultsFromSupabase();
+    } catch (e) {
+      // fallback
+    }
+    renderAll();
+    updateAuthUI();
+  }
 }
 
 init();

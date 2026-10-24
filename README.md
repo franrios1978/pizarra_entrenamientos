@@ -88,13 +88,13 @@ git add . && git commit -m "Resultados" && git push && pnpm exec gh-pages -d src
 
 ### Errores típicos
 
-| Síntoma                           | Causa                      | Solución                                        |
-| --------------------------------- | -------------------------- | ----------------------------------------------- |
-| No aparecen los resultados nuevos | `RESULTS_VERSION` no subió | Súbela a mano (+1) en `src/data.js` y publica   |
-| Un resultado sale en la fecha que no es | `SEED_RESULTS` sin `date` | Añade `date` (`AAAA-MM-DD`) al resultado        |
-| Siguen saliendo los antiguos      | Caché del navegador        | Recarga con Ctrl+Shift+R                        |
-| La web publicada no cambia        | Se publicó antes del push  | Repite `git push` y `pnpm exec gh-pages -d src` |
-| Tarda en actualizarse             | Despliegue de GitHub Pages | Espera 1-2 minutos                              |
+| Síntoma                                 | Causa                      | Solución                                        |
+| --------------------------------------- | -------------------------- | ----------------------------------------------- |
+| No aparecen los resultados nuevos       | `RESULTS_VERSION` no subió | Súbela a mano (+1) en `src/data.js` y publica   |
+| Un resultado sale en la fecha que no es | `SEED_RESULTS` sin `date`  | Añade `date` (`AAAA-MM-DD`) al resultado        |
+| Siguen saliendo los antiguos            | Caché del navegador        | Recarga con Ctrl+Shift+R                        |
+| La web publicada no cambia              | Se publicó antes del push  | Repite `git push` y `pnpm exec gh-pages -d src` |
+| Tarda en actualizarse                   | Despliegue de GitHub Pages | Espera 1-2 minutos                              |
 
 ### Empezar de cero
 
