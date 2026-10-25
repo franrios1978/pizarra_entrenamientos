@@ -19,8 +19,36 @@ const ADMIN_PASSWORD = "Entrenoatope.1978";
 
 /** Entrenamientos. El primero (el próximo) es el que se ve en la pizarra. */
 const WORKOUTS = [
-  {
+    {
     "id": "next",
+    "date": "2026-10-26",
+    "time": "09:00",
+    "name": "AMRAP 20'",
+    "detail": "",
+    "warmup": "Press Militar ( 4 series de 6 a 8 reps )",
+    "scoring": "rounds",
+    "exercises": [
+      {
+        "text": "- carrera 300m ( 2 vueltas )"
+      },
+      {
+        "text": "-Thrusters con mancuernas o barra olímpica ( 10 reps )",
+        "video": "https://www.youtube.com/watch?v=M5gEwLTtWbg",
+        "hint": "Video"
+      },
+      {
+        "text": "- Knee Raises colgado de barra ( 12 reps )",
+        "video": "https://www.youtube.com/shorts/0ZtstOTZcHA",
+        "hint": "Video"
+      },
+      {
+        "text": "-Flexiones de pecho ( 14 reps )"
+      }
+    ],
+    "note": "Se puntúa por rondas completas."
+  },
+  {
+    "id": "wod-2026-10-23",
     "date": "2026-10-23",
     "time": "09:00",
     "name": "AMRAP 20'",
