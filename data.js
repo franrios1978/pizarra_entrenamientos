@@ -5,14 +5,14 @@
 
 /* ==========================================================================
    Crew WOD · DATOS EDITABLES
-   Generado automáticamente el 25/10/2026, 2:01:24.
+   Generado automáticamente el 25/10/2026, 9:40:56.
    ========================================================================== */
 
 /** ID del próximo entrenamiento (el que se muestra en la pizarra). */
 const NEXT_WORKOUT_ID = "next";
 
 /** Versión de los resultados publicados. Se sube sola (+1) al generar el archivo. */
-const RESULTS_VERSION = 6;
+const RESULTS_VERSION = 7;
 
 /** Contraseña del panel de administración. */
 const ADMIN_PASSWORD = "Entrenoatope.1978";
@@ -129,7 +129,7 @@ const ATHLETES = [
 /** Resultados publicados. "value" es SIEMPRE un número: rondas, reps, segundos o kg. */
 const SEED_RESULTS = [
   {
-    "id": "r-mvn2bl23a13uw",
+    "id": "r-mvnkvpgpjwxog",
     "athleteId": "tu",
     "workoutId": "wod-2026-10-16",
     "date": "2026-10-16",
@@ -137,55 +137,15 @@ const SEED_RESULTS = [
     "notes": "Sentadillas con disco de 15 kg Sentadillas con disco de 15 kg"
   },
   {
-    "id": "r-mvn2bl230dzwh",
+    "id": "r-mvnkvpgproytg",
     "athleteId": "fernando",
-    "workoutId": "next",
-    "date": "2026-10-23",
-    "value": 4,
-    "notes": "- 4 rondas completas + carrera de la 5ª ronda."
+    "workoutId": "wod-2026-10-16",
+    "date": "2026-10-16",
+    "value": 915,
+    "notes": "Sentadilla con disco de 15 kg"
   },
   {
-    "id": "r-mvn2bl23cmy0u",
-    "athleteId": "tu",
-    "workoutId": "next",
-    "date": "2026-10-23",
-    "value": 5,
-    "notes": ""
-  },
-  {
-    "id": "r-mvn2bl23hx63k",
-    "athleteId": "lucia",
-    "workoutId": "wod-2026-10-22",
-    "date": "2026-10-22",
-    "value": 4,
-    "notes": "4 rondas + 3 ejercicios"
-  },
-  {
-    "id": "r-mvn2bl23zxkib",
-    "athleteId": "tu",
-    "workoutId": "wod-2026-10-22",
-    "date": "2026-10-22",
-    "value": 4,
-    "notes": "4 rondas + 3 ejercicios"
-  },
-  {
-    "id": "r-mvn2bl230036b",
-    "athleteId": "tu",
-    "workoutId": "wod-2026-10-19",
-    "date": "2026-10-19",
-    "value": 4,
-    "notes": "Push Press 10 reps + Saltos al cajón 12 reps (de la quinta ronda)"
-  },
-  {
-    "id": "r-mvn2bl23oogsu",
-    "athleteId": "lucia",
-    "workoutId": "wod-2026-10-19",
-    "date": "2026-10-19",
-    "value": 4,
-    "notes": ""
-  },
-  {
-    "id": "r-mvn2bl23w3f8t",
+    "id": "r-mvnkvpgpqbkks",
     "athleteId": "lucia",
     "workoutId": "wod-2026-10-16",
     "date": "2026-10-16",
@@ -193,11 +153,51 @@ const SEED_RESULTS = [
     "notes": "Sentadilla con disco de 5 kg (10 sentadillas) Última ronda 1 vuelta de carreta"
   },
   {
-    "id": "r-mvn2bl23wtuxp",
+    "id": "r-mvnkvpgp1kdsl",
     "athleteId": "fernando",
-    "workoutId": "wod-2026-10-16",
-    "date": "2026-10-16",
-    "value": 915,
-    "notes": "Sentadilla con disco de 15 kg"
+    "workoutId": "next",
+    "date": "2026-10-23",
+    "value": 4,
+    "notes": "4 rondas completas + carrera de la 5ª ronda."
+  },
+  {
+    "id": "r-mvnkvpgploig2",
+    "athleteId": "tu",
+    "workoutId": "next",
+    "date": "2026-10-23",
+    "value": 5,
+    "notes": ""
+  },
+  {
+    "id": "r-mvnkvpgpm6w36",
+    "athleteId": "lucia",
+    "workoutId": "wod-2026-10-22",
+    "date": "2026-10-22",
+    "value": 4,
+    "notes": "4 rondas + 3 ejercicios4 rondas + 3 ejercicios"
+  },
+  {
+    "id": "r-mvnkvpgpgfflr",
+    "athleteId": "tu",
+    "workoutId": "wod-2026-10-22",
+    "date": "2026-10-22",
+    "value": 4,
+    "notes": "4 rondas + 3 ejercicios"
+  },
+  {
+    "id": "r-mvnkvpgpz5c8g",
+    "athleteId": "tu",
+    "workoutId": "wod-2026-10-19",
+    "date": "2026-10-19",
+    "value": 4,
+    "notes": "Push Press 10 reps + Saltos al cajón 12 reps (de la quinta ronda)"
+  },
+  {
+    "id": "r-mvnkvpgpptucx",
+    "athleteId": "lucia",
+    "workoutId": "wod-2026-10-19",
+    "date": "2026-10-19",
+    "value": 4,
+    "notes": ""
   }
 ];
