@@ -277,6 +277,7 @@ function initialResults() {
 const state = {
   results: initialResults(),
   historyAthleteId: ATHLETES_LIST[0]?.id,
+  historyVisibleCount: 4,
   rankingWorkoutId: null, // se calcula en init()
   boardWorkoutId: NEXT_WORKOUT_ID, // entrenamiento que se está viendo en la pizarra
   session: null,
@@ -322,6 +323,7 @@ function buildRanking(workoutId) {
 const rankingSelect = $("#ranking-workout");
 const historyChips = $("#history-chips");
 const historyBody = $("#history-body");
+const historyMore = $("#history-more");
 const form = $("#result-form");
 const athleteSelect = $("#athlete");
 const workoutSelect = $("#workout");
@@ -490,7 +492,7 @@ function renderHistory() {
   const isAdmin = Boolean(state.isAdmin);
   $("#history-actions-head").hidden = !isAdmin;
 
-  const rows = state.results
+  const allRows = state.results
     .filter((result) => result.athleteId === state.historyAthleteId)
     .map((result) => ({ result, workout: resolveWorkout(result) }))
     // Un resultado sin entrenamiento válido (entreno borrado de data.js) no se pinta.
@@ -542,6 +544,12 @@ function renderHistory() {
 
       return el("tr", {}, ...cells);
     });
+
+  const visibleCount = Math.min(state.historyVisibleCount, allRows.length);
+  const rows = allRows.slice(0, visibleCount);
+  const remaining = allRows.length - visibleCount;
+  historyMore.hidden = remaining <= 0;
+  historyMore.textContent = remaining > 4 ? `Ver 4 más (quedan ${remaining})` : `Ver ${remaining} más`;
 
   historyBody.replaceChildren(
     ...(rows.length
@@ -619,6 +627,12 @@ historyChips.addEventListener("click", (event) => {
   if (!chip) return;
 
   state.historyAthleteId = chip.dataset.athlete;
+  state.historyVisibleCount = 4;
+  renderHistory();
+});
+
+historyMore.addEventListener("click", () => {
+  state.historyVisibleCount += 4;
   renderHistory();
 });
 
