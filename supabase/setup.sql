@@ -66,6 +66,10 @@ on conflict (id) do update set
   value = excluded.value,
   notes = excluded.notes;
 
+-- El cliente genera el id al insertar; este default sirve como respaldo.
+alter table public.results
+  alter column id set default ('r-' || substr(md5(random()::text || clock_timestamp()::text), 1, 16));
+
 -- 3. Perfiles y administrador.
 create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
