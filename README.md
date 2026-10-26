@@ -96,6 +96,78 @@ git add . && git commit -m "Resultados" && git push && pnpm exec gh-pages -d src
 | La web publicada no cambia              | Se publicó antes del push  | Repite `git push` y `pnpm exec gh-pages -d src` |
 | Tarda en actualizarse                   | Despliegue de GitHub Pages | Espera 1-2 minutos                              |
 
+
+
+
+
+
+
+## Activar Supabase (base de datos compartida)
+
+La web ya está preparada para usar [Supabase](https://supabase.com) como base de datos compartida. Por defecto sigue funcionando con `localStorage` + `data.js`, así que no se rompe nada al integrar esta funcionalidad.
+
+### 1) Comprobar que todo funciona en modo actual
+Antes de activar Supabase, asegúrate de que el modo actual sigue bien:
+
+```sh
+pnpm run dev
+```
+
+Abre `http://localhost:8080` y comprueba que la pizarra, el ranking, el historial, el formulario y el reloj funcionan correctamente.
+
+### 2) Activar Supabase
+Edita `src/supabase-config.js` y cambia `USE_SUPABASE` a `true`:
+
+```js
+"use strict";
+// Configuración de Supabase
+// USE_SUPABASE = false por defecto para mantener compatibilidad hacia atrás
+// Cambiar a true solo cuando todo esté probado
+const SUPABASE_CONFIG = {
+  USE_SUPABASE: true,
+  URL: "https://jgjmlpwnytjwpsponbxr.supabase.co",
+  KEY: "sb_publishable_SF97o_H3_cU7PsLuCNyc8A_72Lg26FW"
+};
+```
+
+### 3) Probar login, permisos y guardado
+Recarga la página con `Ctrl+Shift+R` para evitar caché.
+
+- **Login:** Ahora aparecerá el botón `Iniciar sesión` en la cabecera.
+- **Admin (Fran):** Al iniciar sesión aparecerá `(admin)`. El selector de atleta estará habilitado y podrás subir o corregir resultados de cualquiera.
+- **Miembros:** Solo podrán subir o actualizar resultados de su propio atleta. El selector se fuerza automáticamente a su perfil.
+- **Lectura pública:** La pizarra, ranking e historial siguen siendo visibles sin necesidad de iniciar sesión.
+- **Guardado:** Al apuntar un resultado con sesión iniciada, debería aparecer el mensaje `sincronizado con Supabase`. Comprueba en `Table Editor > results` de Supabase que se ha guardado correctamente.
+
+### 4) Dar acceso a Lucía y Fernando
+Cuando consigas sus correos, crea sus cuentas y vincúlalas:
+
+1. Ve a `Authentication > Users > Add user` en Supabase y crea su usuario. Marca `Auto Confirm User` si aparece.
+2. Copia su UUID y ejecuta este SQL en `SQL Editor` (cambia el UUID por el real):
+
+```sql
+-- Para Lucía
+insert into public.profiles (id, athlete_id, role) values ('UUID_LUCIA', 'lucia', 'member') on conflict (id) do update set athlete_id = excluded.athlete_id, role = 'member';
+insert into public.allowed_users (user_id, athlete_id, enabled) values ('UUID_LUCIA', 'lucia', true) on conflict (user_id) do update set athlete_id = excluded.athlete_id, enabled = true;
+
+-- Para Fernando
+insert into public.profiles (id, athlete_id, role) values ('UUID_FERNANDO', 'fernando', 'member') on conflict (id) do update set athlete_id = excluded.athlete_id, role = 'member';
+insert into public.allowed_users (user_id, athlete_id, enabled) values ('UUID_FERNANDO', 'fernando', true) on conflict (user_id) do update set athlete_id = excluded.athlete_id, enabled = true;
+```
+
+### 5) Desplegar a GitHub Pages
+Si todo funciona correctamente en local con `USE_SUPABASE=true`:
+
+```sh
+git add src/supabase-config.js
+git commit -m "Activar Supabase"
+git push
+pnpm run deploy
+```
+
+> **Truco:** Si en cualquier momento hay algún problema con Supabase, vuelve a poner `USE_SUPABASE: false` en `src/supabase-config.js`. La web volverá al modo actual (`localStorage` + `data.js`) sin romper nada.
+
+
 ### Empezar de cero
 
 Borra la clave `crewwod:results` en el localStorage del navegador
