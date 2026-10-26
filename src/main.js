@@ -190,11 +190,6 @@ function workoutTitle(workout) {
   return [workout.name, workout.detail].filter(Boolean).join(" · ");
 }
 
-/** ID único sencillo para cada resultado nuevo. */
-function makeId() {
-  return `r-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
-}
-
 /* ==========================================================================
    5. ESTADO Y CONSULTAS
    "state" es la única fuente de verdad: los render*() leen de aquí y pintan.
@@ -249,8 +244,29 @@ function resultBelongsTo(result, workout) {
   return resolved !== null && resolved.id === workout.id;
 }
 
+/** ¿Está configurada la web para usar Supabase? */
+function supabaseConfigured() {
+  return !!(typeof SUPABASE_CONFIG !== "undefined" && SUPABASE_CONFIG.USE_SUPABASE);
+}
+
+/**
+ * Resultados iniciales antes de contactar con Supabase.
+ * En modo Supabase se usa el snapshot de data.js (no la caché del navegador) para
+ * que todo el mundo vea lo mismo mientras llegan los datos reales.
+ */
+function initialResults() {
+  if (supabaseConfigured()) {
+    try {
+      return structuredClone(SEED_RESULTS_LIST);
+    } catch {
+      return [...SEED_RESULTS_LIST];
+    }
+  }
+  return store.load();
+}
+
 const state = {
-  results: store.load(),
+  results: initialResults(),
   historyAthleteId: ATHLETES_LIST[0]?.id,
   rankingWorkoutId: null, // se calcula en init()
   boardWorkoutId: NEXT_WORKOUT_ID, // entrenamiento que se está viendo en la pizarra
@@ -261,10 +277,7 @@ const state = {
 };
 
 /** Entrenamientos del más reciente al más antiguo. */
-let workoutsNewestFirst = [...WORKOUTS_LIST].sort((a, b) => b.date.localeCompare(a.date));
-function rebuildWorkoutOrder() {
-  workoutsNewestFirst = [...WORKOUTS_LIST].sort((a, b) => b.date.localeCompare(a.date));
-}
+const workoutsNewestFirst = [...WORKOUTS_LIST].sort((a, b) => b.date.localeCompare(a.date));
 
 /** Entrenamientos que ya tienen al menos un resultado (para el ranking). */
 function workoutsWithResults() {
@@ -292,34 +305,6 @@ function buildRanking(workoutId) {
   });
 }
 
-/**
- * Guarda un resultado. Cada persona tiene un único resultado por entrenamiento:
- * si ya existía, se actualiza en lugar de duplicarlo.
- * El resultado guarda la FECHA del entrenamiento, que es lo único estable
- * (el id "next" se reutiliza de una semana a otra).
- * Devuelve "created" o "updated".
- */
-function saveResult({ athleteId, workout, value, notes }) {
-  const existing = state.results.find(
-    (result) => result.athleteId === athleteId && resultBelongsTo(result, workout),
-  );
-
-  if (existing) {
-    Object.assign(existing, { value, notes });
-    return "updated";
-  }
-
-  state.results.push({
-    id: makeId(),
-    athleteId,
-    workoutId: workout.id,
-    date: workout.date,
-    value,
-    notes,
-  });
-  return "created";
-}
-
 /* ==========================================================================
    6. PINTADO
    ========================================================================== */
@@ -327,6 +312,7 @@ function saveResult({ athleteId, workout, value, notes }) {
 // Referencias al DOM que se usan varias veces
 const rankingSelect = $("#ranking-workout");
 const historyChips = $("#history-chips");
+const historyBody = $("#history-body");
 const form = $("#result-form");
 const athleteSelect = $("#athlete");
 const workoutSelect = $("#workout");
@@ -492,16 +478,17 @@ function renderHistory() {
   const athlete = athleteById.get(state.historyAthleteId);
   $("#history-caption").textContent = `Resultados de ${athlete.name}`;
 
+  const isAdmin = Boolean(state.isAdmin);
+  $("#history-actions-head").hidden = !isAdmin;
+
   const rows = state.results
     .filter((result) => result.athleteId === state.historyAthleteId)
     .map((result) => ({ result, workout: resolveWorkout(result) }))
     // Un resultado sin entrenamiento válido (entreno borrado de data.js) no se pinta.
     .filter(({ workout }) => Boolean(workout))
     .sort((a, b) => b.workout.date.localeCompare(a.workout.date))
-    .map(({ result, workout }) =>
-      el(
-        "tr",
-        {},
+    .map(({ result, workout }) => {
+      const cells = [
         el("td", {}, el("time", { datetime: workout.date }, formatShortDate(workout.date))),
         el(
           "td",
@@ -511,13 +498,56 @@ function renderHistory() {
           ...(result.notes ? [el("span", { class: "results__notes" }, result.notes)] : []),
         ),
         el("td", { class: "results__value" }, SCORING[workout.scoring].format(result.value)),
-      ),
-    );
+      ];
 
-  $("#history-body").replaceChildren(
+      if (isAdmin) {
+        cells.push(
+          el(
+            "td",
+            { class: "results__actions" },
+            el(
+              "button",
+              {
+                type: "button",
+                class: "btn btn--ghost btn--small",
+                "data-result-action": "edit",
+                "data-result-id": result.id,
+                "aria-label": `Editar el resultado de ${athlete.name} del ${formatShortDate(workout.date)}`,
+              },
+              "Editar",
+            ),
+            el(
+              "button",
+              {
+                type: "button",
+                class: "btn btn--ghost btn--small results__delete",
+                "data-result-action": "delete",
+                "data-result-id": result.id,
+                "aria-label": `Borrar el resultado de ${athlete.name} del ${formatShortDate(workout.date)}`,
+              },
+              "Borrar",
+            ),
+          ),
+        );
+      }
+
+      return el("tr", {}, ...cells);
+    });
+
+  historyBody.replaceChildren(
     ...(rows.length
       ? rows
-      : [el("tr", {}, el("td", { colspan: "3" }, `${athlete.name} todavía no tiene resultados.`))]),
+      : [
+          el(
+            "tr",
+            {},
+            el(
+              "td",
+              { colspan: isAdmin ? "4" : "3" },
+              `${athlete.name} todavía no tiene resultados.`,
+            ),
+          ),
+        ]),
   );
 }
 
@@ -632,44 +662,53 @@ clearErrorOnInput(timeInput);
 
 /** "Apuntar mi resultado": el enlace ya baja al formulario; aquí preparamos el campo. */
 $('[data-action="focus-form"]').addEventListener("click", () => {
+  if (!state.isAdmin) {
+    showLoginDialog();
+    return;
+  }
+
+  const next = workoutById.get(NEXT_WORKOUT_ID);
+  if (!next) return;
+
   // La pizarra vuelve al próximo entrenamiento, para que cuadre con el formulario
   selectWorkout(NEXT_WORKOUT_ID);
   // preventScroll: el desplazamiento suave lo hace el propio enlace
-  const focusTarget = workoutById.get(NEXT_WORKOUT_ID).scoring === "time" ? timeInput : resultInput;
+  const focusTarget = next.scoring === "time" ? timeInput : resultInput;
   focusTarget.focus({ preventScroll: true });
 });
 
-/** Guardar un resultado. */
+/** Guardar un resultado (solo administrador). */
 form.addEventListener("submit", async (event) => {
   event.preventDefault(); // evitamos que el navegador recargue la página
 
-  const useSupabase = !!(typeof SUPABASE_CONFIG !== "undefined" && SUPABASE_CONFIG.USE_SUPABASE && window.supabase && window.supabaseClient);
-  if (useSupabase && !state.session) {
-    showStatus("Inicia sesión para apuntar tu resultado.", true);
-    if (typeof showLoginDialog === "function") showLoginDialog();
+  if (!state.isAdmin) {
+    showStatus("Solo el administrador puede gestionar los resultados.", true);
+    if (!state.session) showLoginDialog();
+    return;
+  }
+
+  const client = window.supabaseClient;
+  if (!client || !state.session) {
+    showStatus("Inicia sesión como administrador para guardar resultados.", true);
+    showLoginDialog();
     return;
   }
 
   const data = new FormData(form);
-  let athleteId = data.get("athlete");
+  const athleteId = String(data.get("athlete") || "");
   const workout = workoutById.get(data.get("workout"));
   if (!workout) {
     showStatus("Entrenamiento no válido.", true);
     return;
   }
-  const scoring = SCORING[workout.scoring];
 
-  if (useSupabase && state.session && state.profile) {
-    if (state.isAdmin) {
-      // admin puede elegir cualquiera
-    } else if (state.profile.athlete_id) {
-      athleteId = state.profile.athlete_id;
-      if (athleteSelect) {
-        athleteSelect.value = athleteId;
-        athleteSelect.disabled = true;
-      }
-    }
+  const athlete = athleteById.get(athleteId);
+  if (!athlete) {
+    showStatus("Atleta no válido.", true);
+    return;
   }
+
+  const scoring = SCORING[workout.scoring];
 
   // 1) Validar el resultado: en los entrenos de tiempo se lee del campo Tiempo
   const isTime = scoring === SCORING.time;
@@ -682,60 +721,39 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
-  // 2) Guardar en memoria y en el almacenamiento
-  let outcome = saveResult({
-    athleteId,
-    workout,
-    value,
-    notes: String(data.get("notes")).trim(),
-  });
-  let persisted = store.save(state.results);
+  const notes = String(data.get("notes")).trim();
+  const existing = state.results.find(
+    (result) => result.athleteId === athleteId && resultBelongsTo(result, workout),
+  );
 
-  if (useSupabase && state.session) {
-    try {
-      const notes = String(data.get("notes")).trim();
-      // Intentar upsert por atleta+entrenamiento+fecha
-      const existingRemote = state.results.find(
-        (r) => r.athleteId === athleteId && resultBelongsTo(r, workout),
-      );
-      if (existingRemote && existingRemote.id && !existingRemote.id.toString().startsWith("r-seed-")) {
-        const { error } = await window.supabaseClient
-          .from("results")
-          .update({ value, notes, workout_id: workout.id, date: workout.date })
-          .eq("id", existingRemote.id);
-        if (error) throw error;
-      } else {
-        const { data: ins, error } = await window.supabaseClient
-          .from("results")
-          .insert({
-            athlete_id: athleteId,
-            workout_id: workout.id,
-            date: workout.date,
-            value,
-            notes,
-            created_by: state.session.user.id,
-          })
-          .select()
-          .single();
-        if (error) throw error;
-        if (ins && ins.id) {
-          // actualizar id local si era temporal
-          const local = state.results.find(
-            (r) => r.athleteId === athleteId && resultBelongsTo(r, workout) && (r.id.startsWith("r-") || r.id.startsWith("tmp")),
-          );
-          if (local) local.id = ins.id;
-        }
-      }
-      // Recargar desde Supabase para sincronizar
-      try {
-        await loadResultsFromSupabase();
-      } catch {
-        // ignore
-      }
-      store.save(state.results);
-    } catch (e) {
-      showStatus("Guardado en local. No se ha podido sincronizar con Supabase.", true);
+  // 2) Guardar en Supabase. Si falla, no se toca la copia local.
+  let outcome = "created";
+  try {
+    if (existing && existing.id && !String(existing.id).startsWith("r-seed-")) {
+      const { error } = await client
+        .from("results")
+        .update({ value, notes, workout_id: workout.id, date: workout.date })
+        .eq("id", existing.id);
+      if (error) throw error;
+      outcome = "updated";
+    } else {
+      const { error } = await client.from("results").insert({
+        athlete_id: athleteId,
+        workout_id: workout.id,
+        date: workout.date,
+        value,
+        notes,
+        created_by: state.session.user.id,
+      });
+      if (error) throw error;
     }
+
+    await loadResultsFromSupabase();
+    store.save(state.results);
+  } catch (error) {
+    const detail = error?.message ? ` (${error.message})` : "";
+    showStatus(`No se ha podido guardar en Supabase${detail}.`, true);
+    return;
   }
 
   // 3) Mostrar lo que se acaba de guardar: su historial y el ranking de ese entrenamiento
@@ -749,156 +767,89 @@ form.addEventListener("submit", async (event) => {
   if (form.elements.notes) form.elements.notes.value = "";
 
   const verb = outcome === "created" ? "guardado" : "actualizado";
-  const name = athleteById.get(athleteId)?.name || athleteId;
-  if (useSupabase && state.session) {
-    showStatus(`${name}: resultado ${verb} (${scoring.format(value)}) sincronizado con Supabase.`);
-  } else {
-    showStatus(
-      persisted
-        ? `${name}: resultado ${verb} (${scoring.format(value)}).`
-        : `${name}: resultado ${verb}, pero no se ha podido guardar en este navegador.`,
-      !persisted,
-    );
-  }
+  showStatus(
+    `${athlete.name}: resultado ${verb} (${scoring.format(value)}) y sincronizado con Supabase.`,
+  );
 });
 
 /* ==========================================================================
-   8. PANEL DE ADMINISTRACIÓN
-   Permite (solo a quien conozca la contraseña) generar un archivo data.js
-   con los resultados actuales, para subirlo al repositorio.
-
-   AVISO: en una web estática la contraseña es visible leyendo el JavaScript.
-   Sirve para operar cómodo, no como seguridad real.
+   8. GESTIÓN DE RESULTADOS DEL ADMINISTRADOR
+   Solo el usuario autenticado con role = 'admin' puede editar o borrar.
+   La seguridad real la imponen las políticas RLS de Supabase.
    ========================================================================== */
 
-const ADMIN_SESSION_KEY = "crewwod:admin";
-const adminPanel = $("#admin-panel");
-const adminLogin = $("#admin-login");
-const adminPassword = $("#admin-password");
-const adminLoginBtn = $("#admin-login-btn");
-const adminLoginMsg = $("#admin-login-msg");
-const adminDialog = $("#admin-dialog");
-const adminStatus = $("#admin-status");
+/** Rellena el formulario con un resultado existente para editarlo. */
+function editResult(result) {
+  const workout = resolveWorkout(result);
+  const athlete = athleteById.get(result.athleteId);
 
-/** Muestra el panel de administración (identificado). */
-function showAdminPanel() {
-  adminLogin.hidden = true;
-  adminPanel.hidden = false;
-  adminDialog.showModal();
-}
+  if (!workout || !athlete) {
+    showStatus("No se ha encontrado el entrenamiento o el atleta de ese resultado.", true);
+    return;
+  }
 
-/** Comprueba la contraseña escrita. */
-function tryAdminLogin() {
-  if (adminPassword.value === ADMIN_PASSWORD) {
-    sessionStorage.setItem(ADMIN_SESSION_KEY, "1");
-    adminPassword.value = "";
-    showAdminPanel();
+  selectWorkout(workout.id);
+  athleteSelect.value = result.athleteId;
+
+  const scoring = SCORING[workout.scoring];
+  if (scoring === SCORING.time) {
+    timeInput.value = formatTime(result.value);
+    resultInput.value = "";
   } else {
-    adminLoginMsg.textContent = "Contraseña incorrecta.";
-    adminPassword.value = "";
-    adminPassword.focus();
+    resultInput.value = String(result.value);
+    timeInput.value = "";
+  }
+  if (form.elements.notes) form.elements.notes.value = result.notes || "";
+
+  showStatus(`Editando el resultado de ${athlete.name} del ${formatShortDate(workout.date)}.`);
+
+  const section = $("#subir");
+  section.scrollIntoView({ behavior: "smooth", block: "start" });
+  const target = scoring === SCORING.time ? timeInput : resultInput;
+  setTimeout(() => target.focus({ preventScroll: true }), 300);
+}
+
+/** Borra un resultado en Supabase y en la copia local. */
+async function deleteResult(result) {
+  if (!state.isAdmin) return;
+
+  const workout = resolveWorkout(result);
+  const athlete = athleteById.get(result.athleteId);
+  const name = athlete?.name || result.athleteId;
+  const when = workout ? ` del ${formatShortDate(workout.date)}` : "";
+
+  if (!window.confirm(`¿Borrar el resultado de ${name}${when}?`)) return;
+
+  const client = window.supabaseClient;
+  if (!client) {
+    showStatus("Supabase no está disponible. No se ha borrado nada.", true);
+    return;
+  }
+
+  try {
+    const { error } = await client.from("results").delete().eq("id", result.id);
+    if (error) throw error;
+
+    state.results = state.results.filter((item) => String(item.id) !== String(result.id));
+    store.save(state.results);
+    await loadResultsFromSupabase();
+    renderAll();
+    showStatus(`Resultado de ${name}${when} borrado.`);
+  } catch {
+    showStatus("No se ha podido borrar el resultado en Supabase.", true);
   }
 }
 
-/**
- * Genera el texto completo de data.js a partir de los datos actuales.
- * Respeta WORKOUTS y ATHLETES tal como estén en el proyecto: solo se
- * sustituye la lista de resultados (SEED_RESULTS).
- */
-function buildDataFile() {
-  const header = `'use strict';
+// Delegación: un solo listener para los botones Editar/Borrar del historial.
+historyBody.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-result-action]");
+  if (!button || !state.isAdmin) return;
 
-/* oxlint-disable no-unused-vars */
-/* Las constantes se usan desde main.js: ambos scripts clásicos comparten el mismo ámbito global. */
+  const result = state.results.find((item) => String(item.id) === button.dataset.resultId);
+  if (!result) return;
 
-/* ==========================================================================
-   Crew WOD · DATOS EDITABLES
-   Generado automáticamente el ${new Date().toLocaleString("es-ES")}.
-   ========================================================================== */
-
-/** ID del próximo entrenamiento (el que se muestra en la pizarra). */
-const NEXT_WORKOUT_ID = ${JSON.stringify(NEXT_WORKOUT_ID)};
-
-/** Versión de los resultados publicados. Se sube sola (+1) al generar el archivo. */
-const RESULTS_VERSION = ${RESULTS_VERSION + 1};
-
-/** Contraseña del panel de administración. */
-const ADMIN_PASSWORD = ${JSON.stringify(ADMIN_PASSWORD)};
-
-/** Entrenamientos. El primero (el próximo) es el que se ve en la pizarra. */
-const WORKOUTS = ${JSON.stringify(WORKOUTS, null, 2)};
-
-/** Personas del grupo. */
-const ATHLETES = ${JSON.stringify(ATHLETES, null, 2)};
-
-/** Resultados publicados. "value" es SIEMPRE un número: rondas, reps, segundos o kg. */
-const SEED_RESULTS = ${JSON.stringify(
-    state.results.map(({ athleteId, workoutId, date, value, notes }) => {
-      // El id se reasigna al entrenamiento que corresponde a la fecha del resultado:
-      // así, un resultado guardado contra "next" se publica contra el id ya archivado.
-      const resolved = resolveWorkout({ workoutId, date });
-      return {
-        id: makeId(),
-        athleteId,
-        workoutId: resolved?.id ?? workoutId,
-        date: resolved?.date ?? date ?? null,
-        value,
-        notes,
-      };
-    }),
-    null,
-    2,
-  )};
-`;
-
-  return header;
-}
-
-/** Descarga el data.js generado. */
-function downloadDataFile() {
-  const blob = new Blob([buildDataFile()], { type: "text/javascript" });
-  const url = URL.createObjectURL(blob);
-  const link = el("a", { href: url, download: "data.js" });
-  document.body.append(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-
-  adminStatus.textContent =
-    `data.js descargado con ${state.results.length} resultado(s) y versión ` +
-    `${RESULTS_VERSION + 1} (la versión se sube sola). ` +
-    "Ahora sustitúyelo en src/data.js y haz commit y push.";
-}
-
-// Abrir el panel desde el botón discreto del pie
-$('[data-action="open-admin"]').addEventListener("click", () => {
-  if (sessionStorage.getItem(ADMIN_SESSION_KEY) === "1") {
-    showAdminPanel();
-    adminDialog.showModal();
-  } else {
-    adminDialog.showModal();
-    adminLogin.hidden = false;
-    adminPanel.hidden = true;
-    adminLoginMsg.textContent = "";
-    adminPassword.focus();
-  }
-});
-
-adminLoginBtn.addEventListener("click", tryAdminLogin);
-adminPassword.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    event.preventDefault();
-    tryAdminLogin();
-  }
-});
-
-$("#admin-generate").addEventListener("click", downloadDataFile);
-$("#admin-logout").addEventListener("click", () => {
-  sessionStorage.removeItem(ADMIN_SESSION_KEY);
-  adminDialog.close();
-  adminLogin.hidden = false;
-  adminPanel.hidden = true;
-  adminStatus.textContent = "";
+  if (button.dataset.resultAction === "edit") editResult(result);
+  if (button.dataset.resultAction === "delete") deleteResult(result);
 });
 
 /* ==========================================================================
@@ -1129,14 +1080,15 @@ document.addEventListener("keydown", (event) => {
 
 /* ==========================================================================
    10. AUTENTICACIÓN / SUPABASE
+   Solo el usuario con role = 'admin' puede gestionar la web.
    ========================================================================== */
 
 let supabaseClient = null;
+let authListenerRegistered = false;
 
 function initSupabase() {
   try {
-    if (typeof SUPABASE_CONFIG === "undefined") return;
-    if (!SUPABASE_CONFIG.USE_SUPABASE) return;
+    if (!supabaseConfigured()) return;
     if (!window.supabase || !window.supabase.createClient) return;
     if (supabaseClient) {
       window.supabaseClient = supabaseClient;
@@ -1144,8 +1096,8 @@ function initSupabase() {
     }
     supabaseClient = window.supabase.createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.KEY);
     window.supabaseClient = supabaseClient;
-  } catch (e) {
-    // ignore
+  } catch {
+    // Sin Supabase la web sigue mostrando el respaldo de data.js.
   }
 }
 
@@ -1158,34 +1110,37 @@ const loginEmail = document.getElementById("login-email");
 const loginPassword = document.getElementById("login-password");
 const loginMsg = document.getElementById("login-msg");
 const loginCancel = document.getElementById("login-cancel");
+const navSubir = document.getElementById("nav-subir");
+const boardResultLink = document.getElementById("board-result-link");
+const resultSection = document.getElementById("subir");
 
 function updateAuthUI() {
-  const useSupabase = !!(typeof SUPABASE_CONFIG !== "undefined" && SUPABASE_CONFIG.USE_SUPABASE);
-  if (authBtn) authBtn.hidden = !useSupabase;
-  if (authLogoutBtn) authLogoutBtn.hidden = !useSupabase || !state.session;
+  const enabled = supabaseConfigured();
+  const admin = enabled && state.isAdmin;
+
+  if (authBtn) authBtn.hidden = !enabled || Boolean(state.session);
+  if (authLogoutBtn) authLogoutBtn.hidden = !state.session;
+
   if (authUserEl) {
-    if (useSupabase && state.session) {
+    if (state.session) {
       const name = state.profile?.athlete_id
-        ? (ATHLETES_LIST.find((a) => a.id === state.profile.athlete_id)?.name || state.session.user.email)
+        ? ATHLETES_LIST.find((athlete) => athlete.id === state.profile.athlete_id)?.name ||
+          state.session.user.email
         : state.session.user.email;
-      const role = state.isAdmin ? "admin" : "miembro";
-      authUserEl.textContent = `${name} (${role})`;
+      authUserEl.textContent = admin ? `${name} (admin)` : "No autorizado";
       authUserEl.hidden = false;
     } else {
       authUserEl.hidden = true;
     }
   }
-  // Forzar atleta para miembros
-  if (useSupabase && state.session && state.profile && !state.isAdmin && athleteSelect) {
-    if (state.profile.athlete_id) {
-      athleteSelect.value = state.profile.athlete_id;
-      athleteSelect.disabled = true;
-    }
-  } else if (athleteSelect && !useSupabase) {
-    athleteSelect.disabled = false;
-  } else if (useSupabase && state.session && state.isAdmin && athleteSelect) {
-    athleteSelect.disabled = false;
-  }
+
+  // La gestión de resultados solo existe para el administrador.
+  if (navSubir) navSubir.hidden = !admin;
+  if (boardResultLink) boardResultLink.hidden = !admin;
+  if (resultSection) resultSection.hidden = !admin;
+  if (athleteSelect) athleteSelect.disabled = !admin;
+
+  renderHistory();
 }
 
 function showLoginDialog() {
@@ -1217,23 +1172,49 @@ async function loadUserProfile() {
     updateAuthUI();
     return;
   }
+
   try {
-    const { data: profile } = await supabaseClient
+    const { data: profile, error } = await supabaseClient
       .from("profiles")
       .select("*")
       .eq("id", state.session.user.id)
       .maybeSingle();
-    state.profile = profile || null;
-    state.isAdmin = !!(profile && profile.role === "admin");
-  } catch (e) {
+    if (error) throw error;
+
+    if (!profile || profile.role !== "admin") {
+      const client = supabaseClient;
+      state.profile = null;
+      state.isAdmin = false;
+      state.session = null;
+      updateAuthUI();
+      // Fuera del callback de auth para evitar bloqueos internos de Supabase.
+      setTimeout(() => client.auth.signOut().catch(() => {}), 0);
+      return;
+    }
+
+    state.profile = profile;
+    state.isAdmin = true;
+  } catch {
     state.profile = null;
     state.isAdmin = false;
   }
+
   updateAuthUI();
-  if (state.session && state.profile && !state.isAdmin && athleteSelect && state.profile.athlete_id) {
-    athleteSelect.value = state.profile.athlete_id;
-    athleteSelect.disabled = true;
-  }
+}
+
+function registerAuthListener() {
+  if (!supabaseClient || authListenerRegistered) return;
+  authListenerRegistered = true;
+
+  supabaseClient.auth.onAuthStateChange((_event, session) => {
+    state.session = session;
+    setTimeout(async () => {
+      await loadUserProfile();
+      await loadResultsFromSupabase();
+      renderAll();
+      updateAuthUI();
+    }, 0);
+  });
 }
 
 async function initAuth() {
@@ -1243,136 +1224,167 @@ async function initAuth() {
     updateAuthUI();
     return;
   }
+
   try {
     const { data } = await supabaseClient.auth.getSession();
     state.session = data?.session || null;
-  } catch (e) {
+  } catch {
     state.session = null;
   }
+
   await loadUserProfile();
+
+  if (state.isAdmin) {
+    try {
+      await syncCatalogToSupabase();
+    } catch {
+      // La lectura de resultados sigue funcionando aunque falle la sincronización.
+    }
+  }
+
   state.authReady = true;
   updateAuthUI();
-  try {
-    supabaseClient.auth.onAuthStateChange(async (_event, session) => {
-      state.session = session;
-      await loadUserProfile();
-      await loadResultsFromSupabase();
-      renderAll();
-      updateAuthUI();
-    });
-  } catch (e) {
-    // ignore
+  registerAuthListener();
+}
+
+/**
+ * Sincroniza atletas y entrenamientos de data.js con Supabase.
+ * Así se puede seguir editando el próximo WOD en data.js y publicándolo:
+ * al entrar como administrador, la base de datos recibe los cambios.
+ */
+async function syncCatalogToSupabase() {
+  if (!state.isAdmin || !supabaseClient) return;
+
+  const athletes = ATHLETES_LIST.map((athlete) => ({
+    id: athlete.id,
+    name: athlete.name,
+  }));
+
+  const workouts = WORKOUTS_LIST.map((workout) => ({
+    id: workout.id,
+    date: workout.date,
+    name: workout.name,
+    detail: workout.detail ?? "",
+    time: workout.time ?? null,
+    scoring: workout.scoring,
+    warmup: workout.warmup ?? null,
+    exercises: workout.exercises ?? [],
+    note: workout.note ?? null,
+  }));
+
+  if (athletes.length) {
+    const { error } = await supabaseClient.from("athletes").upsert(athletes, { onConflict: "id" });
+    if (error) throw error;
+  }
+
+  if (workouts.length) {
+    const { error } = await supabaseClient.from("workouts").upsert(workouts, { onConflict: "id" });
+    if (error) throw error;
   }
 }
 
 async function loadResultsFromSupabase() {
   if (!supabaseClient) return;
+
   try {
-    const [athRes, wRes, rRes] = await Promise.all([
-      supabaseClient.from("athletes").select("*"),
-      supabaseClient.from("workouts").select("*"),
-      supabaseClient.from("results").select("*"),
-    ]);
-    if (athRes.data && Array.isArray(athRes.data) && athRes.data.length) {
-      ATHLETES_LIST = athRes.data;
-      // rebuild maps
-      const athleteByIdNew = new Map(ATHLETES_LIST.map((a) => [a.id, a]));
-      athleteById.clear();
-      for (const [k, v] of athleteByIdNew) athleteById.set(k, v);
-      if (!ATHLETES_LIST.find((a) => a.id === state.historyAthleteId) && ATHLETES_LIST[0]) {
-        state.historyAthleteId = ATHLETES_LIST[0].id;
-      }
-      if (athleteSelect) {
-        athleteSelect.replaceChildren(
-          ...ATHLETES_LIST.map((athlete) => el("option", { value: athlete.id }, athlete.name)),
-        );
-      }
-      buildHistoryChips();
-    }
-    if (wRes.data && Array.isArray(wRes.data) && wRes.data.length) {
-      WORKOUTS_LIST = wRes.data;
-      rebuildWorkoutMaps();
-      rebuildWorkoutOrder();
-      if (workoutSelect) {
-        workoutSelect.replaceChildren(...workoutOptions());
-        if (workoutById.has(state.boardWorkoutId)) workoutSelect.value = state.boardWorkoutId;
-        else if (NEXT_WORKOUT_ID && workoutById.has(NEXT_WORKOUT_ID)) {
-          state.boardWorkoutId = NEXT_WORKOUT_ID;
-          workoutSelect.value = NEXT_WORKOUT_ID;
-        }
-      }
-      if (boardWorkoutSelect) {
-        boardWorkoutSelect.replaceChildren(...workoutOptions());
-        boardWorkoutSelect.value = state.boardWorkoutId;
-      }
-      renderNextWorkout(state.boardWorkoutId);
-      updateResultHint();
-    }
-    if (rRes.data && Array.isArray(rRes.data)) {
-      state.results = rRes.data.map((r) => ({
-        id: r.id,
-        athleteId: r.athlete_id,
-        workoutId: r.workout_id,
-        date: r.date,
-        value: r.value,
-        notes: r.notes || "",
+    const { data, error } = await supabaseClient.from("results").select("*");
+    if (error) throw error;
+
+    if (Array.isArray(data)) {
+      state.results = data.map((result) => ({
+        id: result.id,
+        athleteId: result.athlete_id,
+        workoutId: result.workout_id,
+        date: result.date,
+        value: result.value,
+        notes: result.notes || "",
       }));
       store.save(state.results);
     }
-  } catch (e) {
-    // fallback silencioso
+
+    if (!athleteById.has(state.historyAthleteId) && ATHLETES_LIST[0]) {
+      state.historyAthleteId = ATHLETES_LIST[0].id;
+    }
+
+    const availableRankings = workoutsWithResults();
+    if (!availableRankings.some((workout) => workout.id === state.rankingWorkoutId)) {
+      state.rankingWorkoutId = availableRankings[0]?.id ?? null;
+    }
+  } catch {
+    // Si Supabase no responde, se mantiene el respaldo de data.js.
   }
 }
 
 if (authBtn) {
   authBtn.addEventListener("click", () => {
-    if (typeof SUPABASE_CONFIG !== "undefined" && SUPABASE_CONFIG.USE_SUPABASE) {
-      showLoginDialog();
-    }
+    if (supabaseConfigured()) showLoginDialog();
   });
 }
+
 if (authLogoutBtn) {
   authLogoutBtn.addEventListener("click", async () => {
     try {
       if (supabaseClient) await supabaseClient.auth.signOut();
-    } catch (e) {
+    } catch {
       // ignore
     }
     state.session = null;
     state.profile = null;
     state.isAdmin = false;
     updateAuthUI();
-    if (athleteSelect) athleteSelect.disabled = false;
+    renderAll();
   });
 }
+
 if (loginCancel) {
   loginCancel.addEventListener("click", () => closeLoginDialog());
 }
+
 if (loginForm) {
-  loginForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  loginForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
     if (!supabaseClient) {
-      if (loginMsg) loginMsg.textContent = "Supabase no inicializado.";
+      if (loginMsg) loginMsg.textContent = "Supabase no está disponible.";
       return;
     }
-    const email = loginEmail?.value || "";
+
+    const email = loginEmail?.value?.trim() || "";
     const password = loginPassword?.value || "";
     if (!email || !password) {
       if (loginMsg) loginMsg.textContent = "Introduce email y contraseña.";
       return;
     }
+
     if (loginMsg) loginMsg.textContent = "Entrando...";
+
     try {
-      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      if (loginMsg) loginMsg.textContent = "Sesión iniciada.";
+
+      state.session = data.session;
+      await loadUserProfile();
+
+      if (!state.isAdmin) {
+        if (loginMsg) loginMsg.textContent = "No autorizado. Solo el administrador puede acceder.";
+        if (loginPassword) loginPassword.value = "";
+        return;
+      }
+
+      try {
+        await syncCatalogToSupabase();
+      } catch {
+        // No bloquea el inicio de sesión; se reintentará en la próxima visita.
+      }
+
       closeLoginDialog();
-      await initAuth();
       await loadResultsFromSupabase();
       renderAll();
       updateAuthUI();
-    } catch (err) {
-      if (loginMsg) loginMsg.textContent = "Error al iniciar sesión.";
+    } catch {
+      if (loginMsg) {
+        loginMsg.textContent = "No se ha podido iniciar sesión. Revisa el email y la contraseña.";
+      }
     }
   });
 }
@@ -1395,12 +1407,8 @@ async function init() {
   updateAuthUI();
 
   await initAuth();
-  if (typeof SUPABASE_CONFIG !== "undefined" && SUPABASE_CONFIG.USE_SUPABASE && supabaseClient) {
-    try {
-      await loadResultsFromSupabase();
-    } catch (e) {
-      // fallback
-    }
+  if (supabaseConfigured() && supabaseClient) {
+    await loadResultsFromSupabase();
     renderAll();
     updateAuthUI();
   }

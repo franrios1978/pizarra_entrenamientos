@@ -9,14 +9,16 @@ servir la carpeta `src/`.
 ```
 src/
 ├── index.html        Estructura de la página
-├── main.js           Lógica (pintado, formulario, ranking, panel admin)
-├── data.js           Datos editables (entrenos, atletas y resultados publicados)
+├── main.js           Lógica (pintado, formulario, ranking, gestión admin)
+├── data.js           Entrenos y atletas publicados (y respaldo de resultados)
+├── supabase-config.js Configuración de Supabase
 └── css/global.css    Estilos
 ```
 
-- **`data.js`** es el único archivo que se edita para cambiar entrenos, atletas
-  o publicar resultados.
+- **`data.js`** contiene los entrenos y atletas publicados, y sirve de respaldo
+  de resultados si Supabase no responde.
 - **`main.js`** no se toca salvo que quieras cambiar el funcionamiento.
+- **Supabase** guarda los resultados compartidos y las cuentas de acceso.
 
 ## Desarrollo
 
@@ -27,151 +29,60 @@ pnpm run lint       # oxlint sobre src/
 pnpm run fmt        # oxfmt (opcional)
 ```
 
-## Publicar nuevos resultados (rol de administrador)
+## Gestionar resultados (administrador)
 
-> Importante: los resultados se guardan en el navegador (localStorage), no en
-> el código. Para que todo el mundo los vea hay que regenerar `data.js` y
-> subirlo al repositorio.
+La web usa **Supabase** como base de datos compartida. Solo el usuario con rol
+`admin` puede añadir, editar o borrar resultados. El resto de personas puede
+consultar la pizarra, el ranking y el historial, pero no modificar nada.
 
-### Paso a paso
+Administrador actual: `franrios1978@hotmail.com`.
 
-1. **Introducir los resultados** en la web local:
+### Configuración inicial (una sola vez)
 
-   ```sh
-   cd ~/workspace/pizarra_entrenamientos
-   pnpm run dev
-   ```
-
-   Abre <http://localhost:8080> y usa el formulario "Subir resultado" para cada
-   deportista y entrenamiento. Comprueba que aparecen en ranking e historial.
-
-   Hazlo siempre en **localhost**, no en la web publicada.
-
-2. **Generar `data.js`**: pulsa el engranaje ⚙ abajo a la derecha, introduce la
-   contraseña de administrador y pulsa **Descargar data.js**. El archivo se
-   descarga con todos los resultados y con `RESULTS_VERSION` ya incrementada.
-
-3. **Copiar al proyecto**:
+1. En **Supabase → Authentication → Users**, crea o confirma el usuario
+   `franrios1978@hotmail.com` con su contraseña.
+2. En **Supabase → SQL Editor**, ejecuta el archivo completo
+   [`supabase/setup.sql`](supabase/setup.sql). Ese script:
+   - hace una copia de seguridad de los datos actuales en el esquema `backup`;
+   - sustituye los datos de prueba por los entrenos y resultados actuales;
+   - asigna el rol `admin` a `franrios1978@hotmail.com`;
+   - configura RLS: lectura pública y escritura solo del administrador.
+3. En **Authentication → Providers → Email**, desactiva la opción de permitir
+   nuevos registros. Si existen cuentas de otras personas, puedes borrarlas desde
+   **Authentication → Users**; aunque entren, no tendrán permisos de escritura.
+4. Comprueba que `src/supabase-config.js` tiene `USE_SUPABASE: true`.
+5. Publica la web:
 
    ```sh
-   cp ~/Descargas/data.js src/data.js
+   pnpm run deploy
    ```
 
-   (o ábrelo en el editor, copia todo y pégalo sobre `src/data.js`)
+### Uso diario
 
-4. **Verificar** que en `src/data.js` la línea `const RESULTS_VERSION = N;` tiene
-   un número **mayor** que antes. Si no subió, los navegadores seguirán
-   mostrando su copia antigua.
+1. Abre la web publicada o `pnpm run dev` en local.
+2. Pulsa **Iniciar sesión** y entra con tu email y contraseña.
+3. Cuando aparezca `Fran (admin)`:
+   - usa **Subir resultado** para añadir o actualizar un resultado;
+   - en **Historial por persona**, usa **Editar** o **Borrar** sobre cualquier
+     resultado.
+4. Los cambios se guardan directamente en Supabase. Ya no hay que descargar ni
+   sustituir `data.js` para publicar resultados.
 
-5. **Publicar** (primero push, después gh-pages):
+### Comprobar que todo funciona
 
-   ```sh
-   git add .
-   git commit -m "Resultados entrenos N"
-   git push
-   pnpm exec gh-pages -d src
-   ```
+- Sin iniciar sesión: se ven los mismos resultados y no aparece el formulario.
+- Con tu sesión: aparece el formulario y la columna **Acciones**.
+- Al recargar, los cambios siguen ahí porque están en Supabase.
+- Si un usuario que no es administrador intenta entrar, la web cierra su sesión
+  y no le muestra ninguna opción de gestión.
 
-6. **Comprobar** la web publicada recargando con Ctrl+Shift+R:
+### Seguridad
 
-   <https://franrios1978.github.io/pizarra_entrenamientos/>
+La `publishable key` de Supabase es pública, como corresponde en una web
+estática. La seguridad real está en las políticas RLS de `supabase/setup.sql`:
+sin una sesión con `role = 'admin'`, la base de datos rechaza cualquier escritura.
 
-### Chuleta rápida
-
-```sh
-pnpm run dev                              # 1. introducir resultados en localhost:8080
-                                          # 2. engranaje ⚙ → contraseña → Descargar data.js
-cp ~/Descargas/data.js src/data.js        # 3. copiar al proyecto
-                                          # 4. verificar que RESULTS_VERSION subió
-git add . && git commit -m "Resultados" && git push && pnpm exec gh-pages -d src
-```
-
-### Errores típicos
-
-| Síntoma                                 | Causa                      | Solución                                        |
-| --------------------------------------- | -------------------------- | ----------------------------------------------- |
-| No aparecen los resultados nuevos       | `RESULTS_VERSION` no subió | Súbela a mano (+1) en `src/data.js` y publica   |
-| Un resultado sale en la fecha que no es | `SEED_RESULTS` sin `date`  | Añade `date` (`AAAA-MM-DD`) al resultado        |
-| Siguen saliendo los antiguos            | Caché del navegador        | Recarga con Ctrl+Shift+R                        |
-| La web publicada no cambia              | Se publicó antes del push  | Repite `git push` y `pnpm exec gh-pages -d src` |
-| Tarda en actualizarse                   | Despliegue de GitHub Pages | Espera 1-2 minutos                              |
-
-
-
-
-
-
-
-## Activar Supabase (base de datos compartida)
-
-La web ya está preparada para usar [Supabase](https://supabase.com) como base de datos compartida. Por defecto sigue funcionando con `localStorage` + `data.js`, así que no se rompe nada al integrar esta funcionalidad.
-
-### 1) Comprobar que todo funciona en modo actual
-Antes de activar Supabase, asegúrate de que el modo actual sigue bien:
-
-```sh
-pnpm run dev
-```
-
-Abre `http://localhost:8080` y comprueba que la pizarra, el ranking, el historial, el formulario y el reloj funcionan correctamente.
-
-### 2) Activar Supabase
-Edita `src/supabase-config.js` y cambia `USE_SUPABASE` a `true`:
-
-```js
-"use strict";
-// Configuración de Supabase
-// USE_SUPABASE = false por defecto para mantener compatibilidad hacia atrás
-// Cambiar a true solo cuando todo esté probado
-const SUPABASE_CONFIG = {
-  USE_SUPABASE: true,
-  URL: "https://jgjmlpwnytjwpsponbxr.supabase.co",
-  KEY: "sb_publishable_SF97o_H3_cU7PsLuCNyc8A_72Lg26FW"
-};
-```
-
-### 3) Probar login, permisos y guardado
-Recarga la página con `Ctrl+Shift+R` para evitar caché.
-
-- **Login:** Ahora aparecerá el botón `Iniciar sesión` en la cabecera.
-- **Admin (Fran):** Al iniciar sesión aparecerá `(admin)`. El selector de atleta estará habilitado y podrás subir o corregir resultados de cualquiera.
-- **Miembros:** Solo podrán subir o actualizar resultados de su propio atleta. El selector se fuerza automáticamente a su perfil.
-- **Lectura pública:** La pizarra, ranking e historial siguen siendo visibles sin necesidad de iniciar sesión.
-- **Guardado:** Al apuntar un resultado con sesión iniciada, debería aparecer el mensaje `sincronizado con Supabase`. Comprueba en `Table Editor > results` de Supabase que se ha guardado correctamente.
-
-### 4) Dar acceso a Lucía y Fernando
-Cuando consigas sus correos, crea sus cuentas y vincúlalas:
-
-1. Ve a `Authentication > Users > Add user` en Supabase y crea su usuario. Marca `Auto Confirm User` si aparece.
-2. Copia su UUID y ejecuta este SQL en `SQL Editor` (cambia el UUID por el real):
-
-```sql
--- Para Lucía
-insert into public.profiles (id, athlete_id, role) values ('UUID_LUCIA', 'lucia', 'member') on conflict (id) do update set athlete_id = excluded.athlete_id, role = 'member';
-insert into public.allowed_users (user_id, athlete_id, enabled) values ('UUID_LUCIA', 'lucia', true) on conflict (user_id) do update set athlete_id = excluded.athlete_id, enabled = true;
-
--- Para Fernando
-insert into public.profiles (id, athlete_id, role) values ('UUID_FERNANDO', 'fernando', 'member') on conflict (id) do update set athlete_id = excluded.athlete_id, role = 'member';
-insert into public.allowed_users (user_id, athlete_id, enabled) values ('UUID_FERNANDO', 'fernando', true) on conflict (user_id) do update set athlete_id = excluded.athlete_id, enabled = true;
-```
-
-### 5) Desplegar a GitHub Pages
-Si todo funciona correctamente en local con `USE_SUPABASE=true`:
-
-```sh
-git add src/supabase-config.js
-git commit -m "Activar Supabase"
-git push
-pnpm run deploy
-```
-
-> **Truco:** Si en cualquier momento hay algún problema con Supabase, vuelve a poner `USE_SUPABASE: false` en `src/supabase-config.js`. La web volverá al modo actual (`localStorage` + `data.js`) sin romper nada.
-
-
-### Empezar de cero
-
-Borra la clave `crewwod:results` en el localStorage del navegador
-(F12 → Application → Local Storage) y vuelve a introducir los resultados.
+No publiques nunca la `service_role key` en el repositorio ni en el navegador.
 
 ## Editar entrenamientos y atletas
 
@@ -206,9 +117,14 @@ entrenamiento al renovar el WOD:
 > WOD, ese resultado se mostraría en el WOD equivocado. Por eso el campo `date`
 > es obligatorio en los resultados.
 
+Al iniciar sesión como administrador, la web sincroniza automáticamente los
+atletas y entrenamientos de `data.js` con Supabase. Así puedes seguir renovando
+el WOD en `data.js`, publicar con `pnpm run deploy` y entrar después para
+gestionar los resultados.
+
 ## Seguridad
 
-La contraseña del panel de administración está en `src/data.js` y es visible
-leyendo el JavaScript de la web. Sirve para operar cómodo, no como seguridad
-real: en una web estática cualquiera puede verla. Para resultados compartidos
-con seguridad haría falta un backend (API, Supabase, Firebase...).
+La web no guarda contraseñas: el login lo gestiona Supabase Auth. Los permisos
+de escritura están limitados por RLS al usuario con rol `admin`.
+
+Nunca incluyas la `service_role key` de Supabase en el código del navegador.

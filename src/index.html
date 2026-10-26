@@ -63,7 +63,7 @@
           <a href="#pizarra">Pizarra</a>
           <a href="#historial">Historial</a>
           <a href="#reloj">Reloj</a>
-          <a href="#subir">Subir resultado</a>
+          <a id="nav-subir" href="#subir" hidden>Subir resultado</a>
           <button id="auth-btn" class="btn btn--ghost btn--small" type="button">Iniciar sesión</button>
           <span id="auth-user" class="auth-user" hidden></span>
           <button id="auth-logout" class="btn btn--ghost btn--small" type="button" hidden>Cerrar sesión</button>
@@ -111,8 +111,13 @@
           </div>
           <p class="board__note" id="next-note"></p>
           <div class="board__actions">
-            <!-- Es un enlace al formulario; app.js además preselecciona este entrenamiento y da el foco al campo -->
-            <a class="btn btn--yellow" href="#subir" data-action="focus-form"
+            <!-- Es un enlace al formulario; main.js además preselecciona este entrenamiento y da el foco al campo -->
+            <a
+              id="board-result-link"
+              class="btn btn--yellow"
+              href="#subir"
+              data-action="focus-form"
+              hidden
               >Apuntar mi resultado</a
             >
           </div>
@@ -134,7 +139,7 @@
           <section id="historial" class="card" aria-labelledby="history-title">
             <h2 class="card__title" id="history-title">Historial por persona</h2>
 
-            <!-- Los botones de cada persona los crea app.js -->
+            <!-- Los botones de cada persona los crea main.js -->
             <div class="chips" id="history-chips" role="group" aria-label="Elegir persona"></div>
 
             <!-- El contenedor es enfocable para poder desplazar la tabla con el teclado en pantallas pequeñas -->
@@ -146,6 +151,7 @@
                     <th scope="col">Fecha</th>
                     <th scope="col">Entrenamiento</th>
                     <th scope="col">Resultado</th>
+                    <th scope="col" id="history-actions-head" hidden>Acciones</th>
                   </tr>
                 </thead>
                 <tbody id="history-body"></tbody>
@@ -184,7 +190,12 @@
           </section>
         </div>
 
-        <section id="subir" class="card card--accent col-side" aria-labelledby="form-title">
+        <section
+          id="subir"
+          class="card card--accent col-side"
+          aria-labelledby="form-title"
+          hidden
+        >
           <h2 class="card__title" id="form-title">Subir resultado</h2>
 
           <form id="result-form" class="form" novalidate>
@@ -249,39 +260,6 @@
       </div>
     </main>
 
-    <!-- Panel de administración (oculto; se abre con el botón del pie) -->
-    <dialog id="admin-dialog" class="admin">
-      <div id="admin-login" class="admin__box">
-        <h2 class="admin__title">Acceso administrador</h2>
-        <div class="field">
-          <label for="admin-password">Contraseña</label>
-          <input
-            class="control"
-            id="admin-password"
-            type="password"
-            autocomplete="current-password"
-          />
-        </div>
-        <button class="btn btn--dark" id="admin-login-btn" type="button">Entrar</button>
-        <p class="admin__msg" id="admin-login-msg" role="status"></p>
-      </div>
-
-      <div id="admin-panel" class="admin__box" hidden>
-        <h2 class="admin__title">Panel de administración</h2>
-        <p>
-          Genera un archivo <code>data.js</code> con los resultados actuales para publicarlos en el
-          repositorio.
-        </p>
-        <div class="admin__actions">
-          <button class="btn btn--yellow" id="admin-generate" type="button">
-            Descargar data.js
-          </button>
-          <button class="btn btn--dark" id="admin-logout" type="button">Salir</button>
-        </div>
-        <p class="admin__msg" id="admin-status" role="status"></p>
-      </div>
-    </dialog>
-
     <!-- Modal de inicio de sesión -->
     <dialog id="login-dialog" class="admin">
       <div class="admin__box">
@@ -305,9 +283,7 @@
     </dialog>
 
     <footer class="site-footer">
-      <div class="container">
-        <button class="admin-link" type="button" data-action="open-admin">⚙</button>
-      </div>
+      <div class="container"></div>
     </footer>
   </body>
 </html>
