@@ -542,6 +542,28 @@ a {
   color: #4b5a51;
 }
 
+.results__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.results__actions .btn {
+  min-height: 0;
+  padding: 4px 0;
+  font: 600 14px/1 var(--font-body);
+}
+
+.results__actions .results__delete {
+  color: var(--color-error);
+}
+
+.results__actions .results__delete:hover {
+  color: #450a0a;
+}
+
 /* 11. Formulario ---------------------------------------------------------- */
 .form {
   display: flex;
@@ -598,23 +620,10 @@ textarea.control {
   color: var(--color-error);
 }
 
-/* 12. Pie y panel de administración --------------------------------------- */
+/* 12. Pie y diálogos ------------------------------------------------------ */
 .site-footer {
   padding-block: 16px 32px;
   text-align: right;
-}
-
-/* Botón discreto que abre el panel de administración */
-.admin-link {
-  border: 0;
-  background: none;
-  color: var(--color-line);
-  font-size: 18px;
-  cursor: pointer;
-}
-
-.admin-link:hover {
-  color: var(--color-ink);
 }
 
 .admin {
