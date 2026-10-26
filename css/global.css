@@ -16,19 +16,19 @@
 
 /* 1. Variables ------------------------------------------------------------ */
 :root {
-  --color-bg: #e9e6dc;          /* fondo de la página */
-  --color-ink: #1f2a24;         /* verde pizarra: texto y fondos oscuros */
-  --color-paper: #f5f5f0;       /* fondo de las tarjetas claras */
+  --color-bg: #e9e6dc; /* fondo de la página */
+  --color-ink: #1f2a24; /* verde pizarra: texto y fondos oscuros */
+  --color-paper: #f5f5f0; /* fondo de las tarjetas claras */
   --color-chalk-muted: #a7b3aa; /* texto secundario sobre la pizarra */
-  --color-yellow: #facc15;      /* acento: tiza amarilla */
-  --color-green: #1fff32;       /* tiza verde: texto previo del próximo entreno */
-  --color-line: #d6d3c7;        /* bordes y separadores suaves */
-  --color-wood: #8a6240;        /* marco de la pizarra */
+  --color-yellow: #facc15; /* acento: tiza amarilla */
+  --color-green: #1fff32; /* tiza verde: texto previo del próximo entreno */
+  --color-line: #d6d3c7; /* bordes y separadores suaves */
+  --color-wood: #8a6240; /* marco de la pizarra */
   --color-error: #7f1d1d;
-  --color-puntuac_pizarra: #1fff32; 
+  --color-puntuac_pizarra: #1fff32;
 
-  --font-display: 'Permanent Marker', cursive;
-  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: "Permanent Marker", cursive;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 
   --radius: 12px;
   --radius-sm: 8px;
@@ -179,8 +179,12 @@ a {
   gap: var(--gap);
 }
 
-.row--stretch { align-items: stretch; }
-.row--start { align-items: flex-start; }
+.row--stretch {
+  align-items: stretch;
+}
+.row--start {
+  align-items: flex-start;
+}
 
 /* Columna ancha (3 partes) y columna estrecha (2 partes).
    El tercer valor es el ancho mínimo antes de saltar de línea.
@@ -241,8 +245,8 @@ a {
   padding: 6px 0;
   border: 0;
   background: transparent;
-  color: var(--color-chalk-muted);
-  font: 400 clamp(20px, 2.2vw, 26px)/1.2 var(--font-display);
+  color: var(--color-puntuac_pizarra);
+  font: 400 clamp(20px, 2.2vw, 20px)/1.2 var(--font-display);
 }
 
 .btn--ghost:hover {
@@ -701,7 +705,7 @@ textarea.control {
   align-items: center;
   justify-content: center;
   margin: 0;
-  font-family: 'Orbitron', 'Courier New', monospace;
+  font-family: "Orbitron", "Courier New", monospace;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
   font-size: clamp(36px, 8vw, 88px);

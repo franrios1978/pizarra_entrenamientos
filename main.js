@@ -190,6 +190,15 @@ function workoutTitle(workout) {
   return [workout.name, workout.detail].filter(Boolean).join(" · ");
 }
 
+/** ID único para un resultado nuevo (la tabla no genera el id automáticamente). */
+function makeResultId() {
+  const uuid = globalThis.crypto?.randomUUID?.();
+  const random = uuid
+    ? uuid.replaceAll("-", "")
+    : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  return `r-${random}`;
+}
+
 /* ==========================================================================
    5. ESTADO Y CONSULTAS
    "state" es la única fuente de verdad: los render*() leen de aquí y pintan.
@@ -738,6 +747,7 @@ form.addEventListener("submit", async (event) => {
       outcome = "updated";
     } else {
       const { error } = await client.from("results").insert({
+        id: makeResultId(),
         athlete_id: athleteId,
         workout_id: workout.id,
         date: workout.date,
