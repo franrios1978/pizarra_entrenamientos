@@ -18,6 +18,34 @@ const RESULTS_VERSION = 7;
 const WORKOUTS = [
   {
     id: "next",
+    date: "2026-10-27",
+    time: "09:00",
+    name: "Ejercicios de fuerza",
+    detail: "",
+    warmup: "Calentamiento",
+    scoring: "rounds",
+    exercises: [
+      {
+        text: "- Sentadilla trasera ( 3 x 5 )",
+      },
+      {
+        text: "- Peso muerto ( 3 x 5 )",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "- Floor Press ( 3 x 5 )",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "",
+      },
+    ],
+    note: "Se puntúa por rondas completas.",
+  },
+  {
+    id: "wod-2026-10-26",
     date: "2026-10-26",
     time: "09:00",
     name: "AMRAP 20'",
@@ -26,7 +54,7 @@ const WORKOUTS = [
     scoring: "rounds",
     exercises: [
       {
-        text: "- carrera 300m ( 2 vueltas )",
+        text: "- Subidas al cajón ( 12 reps )",
       },
       {
         text: "-Thrusters con mancuernas o barra olímpica ( 10 reps )",
