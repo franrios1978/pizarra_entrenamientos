@@ -18,6 +18,34 @@ const RESULTS_VERSION = 7;
 const WORKOUTS = [
   {
     id: "next",
+    date: "2026-10-28",
+    time: "09:00",
+    name: "Carrera",
+    detail: "",
+    warmup: "",
+    scoring: "rounds",
+    exercises: [
+      {
+        text: "- 12 km AEM (o Boxeo)",
+      },
+      {
+        text: "",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "",
+      },
+    ],
+    note: "",
+  },
+  {
+    id: "wod-2026-10-27",
     date: "2026-10-27",
     time: "09:00",
     name: "Ejercicios de fuerza",
