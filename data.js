@@ -16,8 +16,38 @@ const RESULTS_VERSION = 7;
 
 /** Entrenamientos. El primero (el próximo) es el que se ve en la pizarra. */
 const WORKOUTS = [
-  {
+   {
     id: "next",
+    date: "2026-10-29",
+    time: "09:00",
+    name: "Ejercicios de fuerza",
+    detail: "",
+    warmup: "Calentamiento",
+    scoring: "rounds",
+    exercises: [
+      {
+        text: "- Press Militar con Barra o Mancuernas ( 3 x 5 )",
+         video: "https://www.youtube.com/watch?v=5yWaNOvgFCM",
+        hint: "Video",
+      },
+      {
+        text: "- Remo con Barra ( 3 x 5 )",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "- Dominadas ( 4 x 8 )",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "",
+      },
+    ],
+    note: "Se puntúa por rondas completas.",
+  },
+  {
+    id: "wod-2026-10-28",
     date: "2026-10-28",
     time: "09:00",
     name: "Carrera",
