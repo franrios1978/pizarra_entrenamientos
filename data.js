@@ -16,7 +16,7 @@ const RESULTS_VERSION = 7;
 
 /** Entrenamientos. El primero (el próximo) es el que se ve en la pizarra. */
 const WORKOUTS = [
-   {
+  {
     id: "next",
     date: "2026-10-29",
     time: "09:00",
@@ -27,7 +27,7 @@ const WORKOUTS = [
     exercises: [
       {
         text: "- Press Militar con Barra o Mancuernas ( 3 x 5 )",
-         video: "https://www.youtube.com/watch?v=5yWaNOvgFCM",
+        video: "https://www.youtube.com/watch?v=5yWaNOvgFCM",
         hint: "Video",
       },
       {
@@ -41,7 +41,7 @@ const WORKOUTS = [
         hint: "Video",
       },
       {
-        text: "",
+        text: "- Abdominales",
       },
     ],
     note: "Se puntúa por rondas completas.",
