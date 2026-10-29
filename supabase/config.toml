@@ -1,0 +1,4 @@
+project_id = "jgjmlpwnytjwpsponbxr"
+
+[functions.playlist-export]
+verify_jwt = false
