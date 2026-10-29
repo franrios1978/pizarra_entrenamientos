@@ -18,6 +18,93 @@ const RESULTS_VERSION = 7;
 const WORKOUTS = [
   {
     id: "next",
+    date: "2026-10-30",
+    time: "09:00",
+    name: "AMRAP 20'",
+    detail: "",
+    warmup: "Floor Press ( 3 x 5 )",
+    scoring: "rounds",
+    exercises: [
+      {
+        text: "- Carrera 300 mts",
+      },
+      {
+        text: "- Peso Muerto ( 8 reps )",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "- Thrusters con barra o mancuernas ( 10 reps )",
+        video: "https://www.youtube.com/watch?v=M5gEwLTtWbg",
+        hint: "Video",
+      },
+      {
+        text: "",
+      },
+    ],
+    note: "Se puntúa por rondas completas.",
+  },
+
+  {
+    id: "wod-2026-10-29",
+    date: "2026-10-29",
+    time: "09:00",
+    name: "Ejercicios de fuerza",
+    detail: "",
+    warmup: "Calentamiento",
+    scoring: "rounds",
+    exercises: [
+      {
+        text: "- Press Militar con Barra o Mancuernas ( 3 x 5 )",
+        video: "https://www.youtube.com/watch?v=5yWaNOvgFCM",
+        hint: "Video",
+      },
+      {
+        text: "- Remo con Barra ( 3 x 5 )",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "- Dominadas ( 4 x 8 )",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "- Abdominales",
+      },
+    ],
+    note: "Se puntúa por rondas completas.",
+  },
+  {
+    id: "wod-2026-10-28",
+    date: "2026-10-28",
+    time: "09:00",
+    name: "Carrera",
+    detail: "",
+    warmup: "",
+    scoring: "rounds",
+    exercises: [
+      {
+        text: "- 12 km AEM (o Boxeo)",
+      },
+      {
+        text: "",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "",
+      },
+    ],
+    note: "",
+  },
+  {
+    id: "wod-2026-10-27",
     date: "2026-10-27",
     time: "09:00",
     name: "Ejercicios de fuerza",
