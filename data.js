@@ -18,6 +18,35 @@ const RESULTS_VERSION = 7;
 const WORKOUTS = [
   {
     id: "next",
+    date: "2026-10-30",
+    time: "09:00",
+    name: "AMRAP 20'",
+    detail: "",
+    warmup: "Floor Press ( 3 x 5 )",
+    scoring: "rounds",
+    exercises: [
+      {
+        text: "- Carrera 300 mts",
+      },
+      {
+        text: "- Peso Muerto ( 8 reps )",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "- Thrusters con barra o mancuernas ( 10 reps )",
+        video: "https://www.youtube.com/watch?v=M5gEwLTtWbg",
+        hint: "Video",
+      },
+      {
+        text: "",
+      },
+    ],
+    note: "Se puntúa por rondas completas.",
+  },
+
+  {
+    id: "wod-2026-10-29",
     date: "2026-10-29",
     time: "09:00",
     name: "Ejercicios de fuerza",
