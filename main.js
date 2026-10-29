@@ -14,7 +14,8 @@
    8. Panel de administración
    9. Reloj y cronómetro
    10. Autenticación / Supabase
-   11. Arranque
+   11. PlayList
+   12. Arranque
    ========================================================================== */
 
 /* ==========================================================================
@@ -1414,7 +1415,304 @@ if (loginForm) {
 }
 
 /* ==========================================================================
-   11. ARRANQUE
+   11. PLAYLIST
+   Cualquiera puede leer y añadir temas. Solo el administrador puede editar o
+   borrar filas desde Supabase. El navegador nunca escribe directamente en la
+   tabla: usa la función RPC add_playlist_submission (ver supabase/playlist.sql).
+   ========================================================================== */
+
+const PLAYLIST_INITIAL_LINES = 3;
+const PLAYLIST_MAX_LINES = 50;
+const PLAYLIST_MAX_LENGTH = 200;
+
+const playlistDialog = $("#playlist-dialog");
+const playlistOpen = $("#playlist-open");
+const playlistClose = $("#playlist-close");
+const playlistForm = $("#playlist-form");
+const playlistAuthor = $("#playlist-author");
+const playlistLines = $("#playlist-lines");
+const playlistAdd = $("#playlist-add");
+const playlistSubmit = $("#playlist-submit");
+const playlistStatus = $("#playlist-status");
+const playlistCompany = $("#playlist-company");
+const playlistEntriesEl = $("#playlist-entries");
+
+let playlistLineCount = 0;
+
+function setPlaylistStatus(message, isError = false) {
+  if (!playlistStatus) return;
+  playlistStatus.textContent = message;
+  playlistStatus.classList.toggle("is-error", isError);
+}
+
+/** Añade una casilla numerada. Devuelve el input creado. */
+function addPlaylistLine({ focus = false } = {}) {
+  if (!playlistLines || playlistLineCount >= PLAYLIST_MAX_LINES) return null;
+
+  playlistLineCount += 1;
+  const lineNumber = playlistLineCount;
+
+  const number = el(
+    "span",
+    { class: "playlist-line__number", "aria-hidden": "true" },
+    String(lineNumber),
+  );
+  const input = el("input", {
+    class: "playlist-line__input",
+    type: "text",
+    maxlength: String(PLAYLIST_MAX_LENGTH),
+    autocomplete: "off",
+    "data-playlist-line": "",
+    "aria-label": `Tema ${lineNumber}`,
+  });
+  const row = el("div", { class: "playlist-line" }, number, input);
+
+  // Al escribir en la última casilla se añade otra debajo automáticamente.
+  input.addEventListener("input", () => {
+    setPlaylistStatus("");
+    if (
+      row === playlistLines.lastElementChild &&
+      input.value.trim() &&
+      playlistLineCount < PLAYLIST_MAX_LINES
+    ) {
+      addPlaylistLine();
+    }
+  });
+
+  playlistLines.append(row);
+  if (focus) input.focus();
+  return input;
+}
+
+function resetPlaylistLines(count = PLAYLIST_INITIAL_LINES) {
+  if (!playlistLines) return;
+  playlistLineCount = 0;
+  playlistLines.replaceChildren();
+  for (let index = 0; index < count; index += 1) addPlaylistLine();
+}
+
+function collectPlaylistLines() {
+  if (!playlistLines) return [];
+  return [...playlistLines.querySelectorAll("input[data-playlist-line]")]
+    .map((input) => input.value.trim())
+    .filter(Boolean);
+}
+
+function buildPlaylistForm() {
+  if (!playlistAuthor) return;
+  playlistAuthor.replaceChildren(
+    ...ATHLETES_LIST.map((athlete) => el("option", { value: athlete.id }, athlete.name)),
+  );
+  resetPlaylistLines();
+}
+
+function formatPlaylistDate(isoDate) {
+  return new Date(isoDate).toLocaleString("es-ES", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+}
+
+function renderPlaylistEntries(entries) {
+  if (!playlistEntriesEl) return;
+
+  const groups = new Map();
+  for (const entry of entries) {
+    let group = groups.get(entry.submission_id);
+    if (!group) {
+      group = {
+        athleteId: entry.athlete_id,
+        createdAt: entry.created_at,
+        lines: [],
+      };
+      groups.set(entry.submission_id, group);
+    }
+    group.lines.push(entry);
+  }
+
+  const submissions = [...groups.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+  if (!submissions.length) {
+    playlistEntriesEl.replaceChildren(
+      el("p", { class: "playlist-empty" }, "Todavía no hay temas."),
+    );
+    return;
+  }
+
+  playlistEntriesEl.replaceChildren(
+    ...submissions.map((submission) => {
+      const name = athleteById.get(submission.athleteId)?.name ?? submission.athleteId;
+
+      return el(
+        "article",
+        { class: "playlist-entry" },
+        el(
+          "div",
+          { class: "playlist-entry__head" },
+          el("span", { class: "playlist-entry__name" }, name),
+          el(
+            "time",
+            { class: "playlist-entry__time", datetime: submission.createdAt },
+            formatPlaylistDate(submission.createdAt),
+          ),
+        ),
+        el(
+          "ol",
+          {},
+          ...submission.lines
+            .sort((a, b) => a.position - b.position)
+            .map((line) => el("li", { value: String(line.position) }, line.text)),
+        ),
+      );
+    }),
+  );
+}
+
+async function loadPlaylistEntries() {
+  if (!playlistEntriesEl) return;
+
+  const client = window.supabaseClient;
+  if (!client) {
+    playlistEntriesEl.replaceChildren(
+      el("p", { class: "playlist-empty" }, "La PlayList no está disponible ahora mismo."),
+    );
+    return;
+  }
+
+  playlistEntriesEl.replaceChildren(el("p", { class: "playlist-empty" }, "Cargando…"));
+
+  try {
+    const { data, error } = await client
+      .from("playlist_entries")
+      .select("submission_id, athlete_id, position, text, created_at")
+      .order("created_at", { ascending: false })
+      .order("submission_id", { ascending: true })
+      .order("position", { ascending: true });
+    if (error) throw error;
+
+    renderPlaylistEntries(data ?? []);
+  } catch {
+    playlistEntriesEl.replaceChildren(
+      el("p", { class: "playlist-empty" }, "No se han podido cargar los temas."),
+    );
+  }
+}
+
+function openPlaylistDialog() {
+  if (!playlistDialog) return;
+
+  setPlaylistStatus("");
+  try {
+    playlistDialog.showModal();
+  } catch {
+    playlistDialog.setAttribute("open", "");
+  }
+  playlistAuthor?.focus();
+  loadPlaylistEntries();
+}
+
+function closePlaylistDialog() {
+  if (!playlistDialog) return;
+  try {
+    playlistDialog.close();
+  } catch {
+    playlistDialog.removeAttribute("open");
+  }
+}
+
+playlistOpen?.addEventListener("click", (event) => {
+  event.preventDefault();
+  openPlaylistDialog();
+});
+
+playlistClose?.addEventListener("click", closePlaylistDialog);
+
+playlistAdd?.addEventListener("click", () => {
+  addPlaylistLine({ focus: true });
+});
+
+playlistDialog?.addEventListener("click", (event) => {
+  if (event.target === playlistDialog) closePlaylistDialog();
+});
+
+playlistForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  // Si el campo trampa tiene contenido, es un bot: no hacemos nada.
+  if (playlistCompany?.value) return;
+
+  const athleteId = playlistAuthor?.value || "";
+  const lines = collectPlaylistLines();
+
+  if (!athleteId) {
+    setPlaylistStatus("Elige quién eres.", true);
+    playlistAuthor?.focus();
+    return;
+  }
+
+  if (!lines.length) {
+    setPlaylistStatus("Escribe al menos un tema.", true);
+    playlistLines?.querySelector("input")?.focus();
+    return;
+  }
+
+  if (lines.length > PLAYLIST_MAX_LINES) {
+    setPlaylistStatus(`Puedes enviar como máximo ${PLAYLIST_MAX_LINES} temas.`, true);
+    return;
+  }
+
+  if (lines.some((line) => line.length > PLAYLIST_MAX_LENGTH)) {
+    setPlaylistStatus(
+      `Cada tema puede tener como máximo ${PLAYLIST_MAX_LENGTH} caracteres.`,
+      true,
+    );
+    return;
+  }
+
+  const client = window.supabaseClient;
+  if (!client) {
+    setPlaylistStatus("La PlayList no está disponible ahora mismo.", true);
+    return;
+  }
+
+  const submitText = playlistSubmit?.textContent ?? "Enviar";
+  if (playlistSubmit) {
+    playlistSubmit.disabled = true;
+    playlistSubmit.textContent = "Enviando…";
+  }
+  setPlaylistStatus("Guardando…");
+
+  try {
+    const { error } = await client.rpc("add_playlist_submission", {
+      p_athlete_id: athleteId,
+      p_lines: lines,
+    });
+    if (error) throw error;
+
+    // Regenera playlist.txt en Storage. Si la función no está desplegada, los
+    // temas ya están guardados igualmente.
+    try {
+      await client.functions.invoke("playlist-export", { body: {} });
+    } catch {
+      // La exportación no debe impedir cerrar el formulario.
+    }
+
+    resetPlaylistLines();
+    setPlaylistStatus("");
+    closePlaylistDialog();
+  } catch (error) {
+    const detail = error?.message ? ` (${error.message})` : "";
+    setPlaylistStatus(`No se ha podido enviar${detail}.`, true);
+  } finally {
+    if (playlistSubmit) {
+      playlistSubmit.disabled = false;
+      playlistSubmit.textContent = submitText;
+    }
+  }
+});
+
+/* ==========================================================================
+   12. ARRANQUE
    ========================================================================== */
 
 async function init() {
@@ -1425,6 +1723,7 @@ async function init() {
   buildHistoryChips();
   buildFormOptions();
   buildBoardOptions();
+  buildPlaylistForm();
   updateResultHint();
   renderAll();
   startClockTick();

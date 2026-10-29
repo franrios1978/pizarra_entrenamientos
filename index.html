@@ -63,6 +63,7 @@
           <a href="#pizarra">Pizarra</a>
           <a href="#historial">Historial</a>
           <a href="#reloj">Reloj</a>
+          <a id="playlist-open" href="#playlist-dialog">PlayList</a>
           <a id="nav-subir" href="#subir" hidden>Subir resultado</a>
           <button id="auth-btn" class="btn btn--ghost btn--small" type="button">Iniciar sesión</button>
           <span id="auth-user" class="auth-user" hidden></span>
@@ -264,6 +265,50 @@
         </section>
       </div>
     </main>
+
+    <!-- Modal de PlayList: cualquiera puede leer y añadir temas -->
+    <dialog id="playlist-dialog" class="playlist" aria-labelledby="playlist-title">
+      <div class="playlist__box">
+        <div class="playlist__head">
+          <h2 class="playlist__title" id="playlist-title">Pon tus temas favoritos</h2>
+          <button
+            type="button"
+            class="playlist__close"
+            id="playlist-close"
+            aria-label="Cerrar PlayList"
+          >
+            ×
+          </button>
+        </div>
+
+        <form id="playlist-form" class="form" novalidate>
+          <div class="field">
+            <label for="playlist-author">Quién eres</label>
+            <select class="control" id="playlist-author" name="author" required></select>
+          </div>
+
+          <fieldset class="playlist-field">
+            <legend>Tus temas</legend>
+            <div class="playlist-lines" id="playlist-lines"></div>
+            <button type="button" class="playlist__add" id="playlist-add">+ Añadir casilla</button>
+          </fieldset>
+
+          <!-- Trampa anti-spam: las personas no la ven ni la rellenan -->
+          <div class="visually-hidden" aria-hidden="true">
+            <label for="playlist-company">Empresa</label>
+            <input id="playlist-company" name="company" type="text" tabindex="-1" autocomplete="off" />
+          </div>
+
+          <button class="btn btn--dark" id="playlist-submit" type="submit">Enviar</button>
+          <p class="form__status" id="playlist-status" role="status"></p>
+        </form>
+
+        <section class="playlist-read" aria-labelledby="playlist-read-title">
+          <h3 class="playlist-read__title" id="playlist-read-title">Lo que han puesto</h3>
+          <div class="playlist-entries" id="playlist-entries"></div>
+        </section>
+      </div>
+    </dialog>
 
     <!-- Modal de inicio de sesión -->
     <dialog id="login-dialog" class="admin">
