@@ -1516,23 +1516,25 @@ function formatPlaylistDate(isoDate) {
 function renderPlaylistEntries(entries) {
   if (!playlistEntriesEl) return;
 
+  // Agrupa todos los temas de cada persona, aunque los haya enviado en varias veces.
   const groups = new Map();
   for (const entry of entries) {
-    let group = groups.get(entry.submission_id);
+    let group = groups.get(entry.athlete_id);
     if (!group) {
       group = {
         athleteId: entry.athlete_id,
-        createdAt: entry.created_at,
+        latestAt: entry.created_at,
         lines: [],
       };
-      groups.set(entry.submission_id, group);
+      groups.set(entry.athlete_id, group);
     }
     group.lines.push(entry);
+    if (entry.created_at > group.latestAt) group.latestAt = entry.created_at;
   }
 
-  const submissions = [...groups.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const users = [...groups.values()].sort((a, b) => b.latestAt.localeCompare(a.latestAt));
 
-  if (!submissions.length) {
+  if (!users.length) {
     playlistEntriesEl.replaceChildren(
       el("p", { class: "playlist-empty" }, "Todavía no hay temas."),
     );
@@ -1540,8 +1542,8 @@ function renderPlaylistEntries(entries) {
   }
 
   playlistEntriesEl.replaceChildren(
-    ...submissions.map((submission) => {
-      const name = athleteById.get(submission.athleteId)?.name ?? submission.athleteId;
+    ...users.map((user) => {
+      const name = athleteById.get(user.athleteId)?.name ?? user.athleteId;
 
       return el(
         "article",
@@ -1552,16 +1554,21 @@ function renderPlaylistEntries(entries) {
           el("span", { class: "playlist-entry__name" }, name),
           el(
             "time",
-            { class: "playlist-entry__time", datetime: submission.createdAt },
-            formatPlaylistDate(submission.createdAt),
+            { class: "playlist-entry__time", datetime: user.latestAt },
+            formatPlaylistDate(user.latestAt),
           ),
         ),
         el(
           "ol",
           {},
-          ...submission.lines
-            .sort((a, b) => a.position - b.position)
-            .map((line) => el("li", { value: String(line.position) }, line.text)),
+          ...user.lines
+            .sort(
+              (a, b) =>
+                a.created_at.localeCompare(b.created_at) ||
+                a.submission_id.localeCompare(b.submission_id) ||
+                a.position - b.position,
+            )
+            .map((line, index) => el("li", { value: String(index + 1) }, line.text)),
         ),
       );
     }),
