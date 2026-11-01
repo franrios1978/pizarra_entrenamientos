@@ -16,8 +16,52 @@ const RESULTS_VERSION = 7;
 
 /** Entrenamientos. El primero (el próximo) es el que se ve en la pizarra. */
 const WORKOUTS = [
-  {
+{
     id: "next",
+    date: "2026-11-02",
+    time: "09:00",
+    name: "AMRAP 20'",
+    detail: "",
+    warmup: "Dominadas lastradas ( 5 x 5 )",
+    scoring: "rounds",
+    exercises: [
+      {
+        text: "- Clean and Jerk ( 6 reps )",
+      },
+      {
+        text: "- Box Jump Over ( 10 reps )",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "- Fondos en paralelas ( 8 reps )",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "",
+      },
+      {
+        text: "- Flexiones de pecho ( 10 reps )",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "",
+      },
+      {
+        text: "- Kettlebell Swing ( 12 reps )",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "",
+      },
+    ],
+    note: "Se puntúa por rondas completas.",
+  },
+  {
+    id: "wod-2026-10-30",
     date: "2026-10-30",
     time: "09:00",
     name: "AMRAP 20'",
