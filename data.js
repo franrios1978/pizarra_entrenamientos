@@ -16,8 +16,52 @@ const RESULTS_VERSION = 7;
 
 /** Entrenamientos. El primero (el próximo) es el que se ve en la pizarra. */
 const WORKOUTS = [
-{
+  {
     id: "next",
+    date: "2026-11-05",
+    time: "09:00",
+    name: "AMRAP 20'",
+    detail: "",
+    warmup: "Floor Press ( 5 x 5 reps)",
+    scoring: "rounds",
+    exercises: [
+      {
+        text: "- Flexiones de brazo ( 10 reps )",
+      },
+      {
+        text: "- Fondos en paralelas ( 8 reps )",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "- Dominadas ( 8 reps )",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "",
+      },
+      {
+        text: "- Saltos al cajón con burpee ( 8 reps )",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "",
+      },
+      {
+        text: "",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "",
+      },
+    ],
+    note: "Se puntúa por rondas completas.",
+  },
+  {
+    id: "wod-2026-11-02",
     date: "2026-11-02",
     time: "09:00",
     name: "AMRAP 20'",
