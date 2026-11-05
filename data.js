@@ -18,6 +18,50 @@ const RESULTS_VERSION = 7;
 const WORKOUTS = [
   {
     id: "next",
+    date: "2026-11-06",
+    time: "09:00",
+    name: "AMRAP 20'",
+    detail: "",
+    warmup: "Sentadilla Frontal ( 5 x 5 reps)",
+    scoring: "rounds",
+    exercises: [
+      {
+        text: "- opción 1: Carrera ( 200 mtros )",
+      },
+      {
+        text: "- opción 2: Bicicleta ( 20 calorias )",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "- Sentadillas Aereas ( 20 reps )",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "",
+      },
+      {
+        text: "- Kettlebell Swings ( 12 reps )",
+        video: "https://www.youtube.com/watch?v=mKDIuUbH94Q",
+        hint: "Video",
+      },
+      {
+        text: "",
+      },
+      {
+        text: "- Salto a la comba ( 30 saltos )",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "",
+      },
+    ],
+    note: "Se puntúa por rondas completas.",
+  },
+  {
+    id: "wod-20026-11-05",
     date: "2026-11-05",
     time: "09:00",
     name: "AMRAP 20'",
