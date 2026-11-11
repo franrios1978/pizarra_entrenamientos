@@ -17,7 +17,48 @@ const RESULTS_VERSION = 7;
 /** Entrenamientos. El primero (el próximo) es el que se ve en la pizarra. */
 const WORKOUTS = [
   {
+    {
     id: "next",
+    date: "2026-11-13",
+    time: "09:00",
+    name: "AMRAP 20'",
+    detail: "",
+    warmup: "Shoulder Press ( 5 x 5 reps)",
+    scoring: "rounds",
+    exercises: [
+      {
+        text: "- opción 1: Carrera ( 200 mtros )",
+      },
+      {
+        text: "- opción 2: Bicicleta ( 20 calorias )",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "- Dumbbell Front Squat ( 14 reps )",
+        video: "https://www.youtube.com/watch?v=B86Zj72LwzA",
+        hint: "Video",
+      },
+      {
+        text: "",
+      },
+      {
+        text: "- Kettlebell Swings ( 14 reps )",
+        video: "https://www.youtube.com/watch?v=mKDIuUbH94Q",
+        hint: "Video",
+      },
+      {
+        text: "",
+      },
+      {
+        text: "- Salto al cajón con Burpess ( 8 saltos )",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "",
+      },
+    id: "wod-2026-11-06",
     date: "2026-11-06",
     time: "09:00",
     name: "AMRAP 20'",
