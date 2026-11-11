@@ -17,7 +17,6 @@ const RESULTS_VERSION = 7;
 /** Entrenamientos. El primero (el próximo) es el que se ve en la pizarra. */
 const WORKOUTS = [
   {
-    {
     id: "next",
     date: "2026-11-13",
     time: "09:00",
@@ -58,6 +57,10 @@ const WORKOUTS = [
       {
         text: "",
       },
+    ],
+    note: "Se puntúa por rondas completas.",
+  },
+  {
     id: "wod-2026-11-06",
     date: "2026-11-06",
     time: "09:00",
