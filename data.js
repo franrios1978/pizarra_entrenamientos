@@ -18,6 +18,50 @@ const RESULTS_VERSION = 7;
 const WORKOUTS = [
   {
     id: "next",
+    date: "2026-11-18",
+    time: "09:00",
+    name: "5 rondas",
+    detail: "",
+    warmup: "Clean o Dumbbell Clean ( 5 x 5 reps )",
+    scoring: "rounds",
+    exercises: [
+      {
+        text: "- Dominadas ( 8 reps )",
+      },
+      {
+        text: "- Fondos en paralelas ( 8 reps )",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "- Flexiones de brazo ( 12 reps )",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "",
+      },
+      {
+        text: "- Zancadas con peso ( 12 reps )",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "",
+      },
+      {
+        text: "",
+        video: "",
+        hint: "Video",
+      },
+      {
+        text: "",
+      },
+    ],
+    note: "Se puntúa por rondas completas.",
+  },
+  {
+    id: "wod-2026-11-13",
     date: "2026-11-13",
     time: "09:00",
     name: "AMRAP 20'",
