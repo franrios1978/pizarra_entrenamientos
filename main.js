@@ -1426,7 +1426,7 @@ const PLAYLIST_MAX_LINES = 50;
 const PLAYLIST_MAX_LENGTH = 200;
 
 const playlistDialog = $("#playlist-dialog");
-const playlistOpen = $("#playlist-open");
+const playlistOpenDialog = $("#playlist-open-dialog");
 const playlistClose = $("#playlist-close");
 const playlistForm = $("#playlist-form");
 const playlistAuthor = $("#playlist-author");
@@ -1627,8 +1627,7 @@ function closePlaylistDialog() {
   }
 }
 
-playlistOpen?.addEventListener("click", (event) => {
-  event.preventDefault();
+playlistOpenDialog?.addEventListener("click", () => {
   openPlaylistDialog();
 });
 

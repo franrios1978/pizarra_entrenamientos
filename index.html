@@ -63,11 +63,23 @@
           <a href="#pizarra">Pizarra</a>
           <a href="#historial">Historial</a>
           <a href="#reloj">Reloj</a>
-          <a id="playlist-open" href="#playlist-dialog">PlayList</a>
+          <div class="nav-dropdown">
+            <a class="nav-dropdown__trigger" href="#musica">PlayList</a>
+            <div class="nav-dropdown__menu">
+              <a class="nav-dropdown__item" href="#musica">Playlist del entreno</a>
+              <button class="nav-dropdown__item" type="button" id="playlist-open-dialog">
+                Pon tus temas favoritos
+              </button>
+            </div>
+          </div>
           <a id="nav-subir" href="#subir" hidden>Subir resultado</a>
-          <button id="auth-btn" class="btn btn--ghost btn--small" type="button">Iniciar sesión</button>
+          <button id="auth-btn" class="btn btn--ghost btn--small" type="button">
+            Iniciar sesión
+          </button>
           <span id="auth-user" class="auth-user" hidden></span>
-          <button id="auth-logout" class="btn btn--ghost btn--small" type="button" hidden>Cerrar sesión</button>
+          <button id="auth-logout" class="btn btn--ghost btn--small" type="button" hidden>
+            Cerrar sesión
+          </button>
         </nav>
       </div>
     </header>
@@ -159,8 +171,13 @@
               </table>
             </div>
 
-            <button type="button" class="btn btn--dark history__more" id="history-more"
-              aria-controls="history-body" hidden>
+            <button
+              type="button"
+              class="btn btn--dark history__more"
+              id="history-more"
+              aria-controls="history-body"
+              hidden
+            >
               Ver más
             </button>
           </section>
@@ -194,14 +211,21 @@
               </button>
             </div>
           </section>
+          <section id="musica" class="card" aria-labelledby="music-title">
+            <h2 class="card__title" id="music-title">Playlist del entreno</h2>
+            <iframe
+              title="Playlist del entreno en Spotify"
+              src="https://open.spotify.com/embed/playlist/1hUEVssUUEJxk149tnIQcU"
+              width="100%"
+              height="352"
+              style="border: 0; border-radius: 12px"
+              allow="encrypted-media"
+              loading="lazy"
+            ></iframe>
+          </section>
         </div>
 
-        <section
-          id="subir"
-          class="card card--accent col-side"
-          aria-labelledby="form-title"
-          hidden
-        >
+        <section id="subir" class="card card--accent col-side" aria-labelledby="form-title" hidden>
           <h2 class="card__title" id="form-title">Subir resultado</h2>
 
           <form id="result-form" class="form" novalidate>
@@ -296,7 +320,13 @@
           <!-- Trampa anti-spam: las personas no la ven ni la rellenan -->
           <div class="visually-hidden" aria-hidden="true">
             <label for="playlist-company">Empresa</label>
-            <input id="playlist-company" name="company" type="text" tabindex="-1" autocomplete="off" />
+            <input
+              id="playlist-company"
+              name="company"
+              type="text"
+              tabindex="-1"
+              autocomplete="off"
+            />
           </div>
 
           <button class="btn btn--dark" id="playlist-submit" type="submit">Enviar</button>
@@ -321,7 +351,13 @@
           </div>
           <div class="field">
             <label for="login-password">Contraseña</label>
-            <input class="control" id="login-password" type="password" autocomplete="current-password" required />
+            <input
+              class="control"
+              id="login-password"
+              type="password"
+              autocomplete="current-password"
+              required
+            />
           </div>
           <div class="admin__actions">
             <button class="btn btn--dark" type="submit">Entrar</button>
