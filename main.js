@@ -1428,6 +1428,8 @@ const PLAYLIST_MAX_LENGTH = 200;
 const playlistDialog = $("#playlist-dialog");
 const playlistOpenDialog = $("#playlist-open-dialog");
 const playlistClose = $("#playlist-close");
+const playlistDropdown = $("#playlist-dropdown");
+const playlistMenuToggle = $("#playlist-menu-toggle");
 const playlistForm = $("#playlist-form");
 const playlistAuthor = $("#playlist-author");
 const playlistLines = $("#playlist-lines");
@@ -1626,6 +1628,32 @@ function closePlaylistDialog() {
     playlistDialog.removeAttribute("open");
   }
 }
+
+function setPlaylistMenu(open) {
+  if (!playlistDropdown || !playlistMenuToggle) return;
+  playlistDropdown.classList.toggle("is-open", open);
+  playlistMenuToggle.setAttribute("aria-expanded", String(open));
+}
+
+playlistMenuToggle?.addEventListener("click", (event) => {
+  event.stopPropagation();
+  const isOpen = playlistDropdown?.classList.contains("is-open");
+  setPlaylistMenu(!isOpen);
+});
+
+document.addEventListener("click", (event) => {
+  if (playlistDropdown && !playlistDropdown.contains(event.target)) {
+    setPlaylistMenu(false);
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") setPlaylistMenu(false);
+});
+
+playlistDropdown?.querySelectorAll(".nav-dropdown__item").forEach((item) => {
+  item.addEventListener("click", () => setPlaylistMenu(false));
+});
 
 playlistOpenDialog?.addEventListener("click", () => {
   openPlaylistDialog();

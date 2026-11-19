@@ -164,13 +164,24 @@ a {
   color: var(--color-yellow);
 }
 
-/* Desplegable de PlayList (aparece al pasar el cursor o con foco de teclado) */
+/* Desplegable de PlayList (hover en PC, toque/clic en móvil) */
 .nav-dropdown {
   position: relative;
 }
 
 .nav-dropdown__trigger {
-  text-decoration: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  cursor: pointer;
+}
+
+.nav-dropdown__trigger:hover,
+.nav-dropdown__trigger[aria-expanded="true"] {
+  color: var(--color-yellow);
 }
 
 .nav-dropdown__menu {
@@ -191,7 +202,8 @@ a {
 }
 
 .nav-dropdown:hover .nav-dropdown__menu,
-.nav-dropdown:focus-within .nav-dropdown__menu {
+.nav-dropdown:focus-within .nav-dropdown__menu,
+.nav-dropdown.is-open .nav-dropdown__menu {
   display: flex;
 }
 

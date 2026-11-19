@@ -63,9 +63,17 @@
           <a href="#pizarra">Pizarra</a>
           <a href="#historial">Historial</a>
           <a href="#reloj">Reloj</a>
-          <div class="nav-dropdown">
-            <a class="nav-dropdown__trigger" href="#musica">PlayList</a>
-            <div class="nav-dropdown__menu">
+          <div class="nav-dropdown" id="playlist-dropdown">
+            <button
+              type="button"
+              class="nav-dropdown__trigger"
+              id="playlist-menu-toggle"
+              aria-expanded="false"
+              aria-controls="playlist-menu"
+            >
+              PlayList
+            </button>
+            <div class="nav-dropdown__menu" id="playlist-menu">
               <a class="nav-dropdown__item" href="#musica">Playlist del entreno</a>
               <button class="nav-dropdown__item" type="button" id="playlist-open-dialog">
                 Pon tus temas favoritos
